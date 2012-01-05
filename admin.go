@@ -2,7 +2,6 @@ package admin
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"path"
 	"reflect"
@@ -78,7 +77,7 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Unable to process that request.")
 	}
 
-	log.Println(req.URL.Path, r)
+	fmt.Fprintln(w, r)
 }
 
 type request struct {

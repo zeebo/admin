@@ -16,3 +16,14 @@ func Register(typ interface{}, collection string) {
 	}
 	collections[collection] = t
 }
+
+//Returns an interface{} that corresponds to a *T where T is the type registered
+//under the collection name.
+func GetType(coll string) interface{} {
+	t, ok := collections[coll]
+	if !ok {
+		return nil
+	}
+
+	return reflect.New(t).Interface()
+}

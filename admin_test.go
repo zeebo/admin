@@ -9,33 +9,36 @@ import (
 type T struct{}
 
 func TestRegister(t *testing.T) {
-	Register(T{}, "T", nil)
-	defer Unregister("T")
+	h := &Admin{}
 
-	ans := getType("T")
+	h.Register(T{}, "T", nil)
+
+	ans := h.newType("T")
 	if _, ok := ans.(*T); !ok {
 		t.Fatalf("Type incorrect. Expected *admin.T, got %T", ans)
 	}
 }
 
 func TestRegisterFail(t *testing.T) {
+	h := &Admin{}
+
 	defer func() {
 		if err := recover(); err == nil {
 			t.Fatal("No panic when attempting to reregister type")
 		}
 	}()
-	Register(T{}, "T", nil)
-	defer Unregister("T")
 
-	Register(T{}, "T", nil)
+	h.Register(T{}, "T", nil)
+	h.Register(T{}, "T", nil)
 }
 
-func TestGetTypeNewInstance(t *testing.T) {
-	Register(T{}, "T", nil)
-	defer Unregister("T")
+func TestNewTypeNewInstance(t *testing.T) {
+	h := &Admin{}
 
-	ans1 := getType("T")
-	ans2 := getType("T")
+	h.Register(T{}, "T", nil)
+
+	ans1 := h.newType("T")
+	ans2 := h.newType("T")
 	if ans1.(*T) == ans2.(*T) {
 		t.Fatal("getType returned identical instances")
 	}

@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"flag"
 	"launchpad.net/gobson/bson"
 	"launchpad.net/mgo"
 	"log"
@@ -9,13 +10,22 @@ import (
 	"testing"
 )
 
+var (
+	database = flag.String("db", "admin_test", "Database for mongo connnection")
+	reload   = flag.Bool("load", false, "Run mongoimport on the json file for the database")
+	jsonfile = flag.String("json", "admin_test.json", "Json file for loading into the database")
+)
+
 func init() {
+	flag.Parse()
 	//Import: mongoimport --drop -d admin_test -c T admin_test.json
 	//Export: mongoexport -d admin_test -c T > admin_test.json
 
-	cmd := exec.Command("mongoimport", "--drop", "-d", "admin_test", "-c", "T", "admin_test.json")
-	if err := cmd.Run(); err != nil {
-		log.Fatal(err)
+	if *reload {
+		cmd := exec.Command("mongoimport", "--drop", "-d", *database, "-c", "T", *jsonfile)
+		if err := cmd.Run(); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -84,7 +94,7 @@ func TestAuthorized(t *testing.T) {
 func TestInvalidDetail(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 	}
 	var w *TestResponseWriter
@@ -103,7 +113,7 @@ func TestInvalidDetail(t *testing.T) {
 func TestInvalidIndex(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 	}
 	var w *TestResponseWriter
@@ -117,7 +127,7 @@ func TestInvalidIndex(t *testing.T) {
 func TestInvalidList(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 	}
 	var w *TestResponseWriter
@@ -131,7 +141,7 @@ func TestInvalidList(t *testing.T) {
 func TestInvalidUpdate(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 	}
 	var w *TestResponseWriter
@@ -150,7 +160,7 @@ func TestInvalidUpdate(t *testing.T) {
 func TestInvalidCreate(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 	}
 	var w *TestResponseWriter
@@ -165,7 +175,7 @@ func TestCorrectRenderIndex(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
@@ -187,7 +197,7 @@ func TestCorrectRenderList(t *testing.T) {
 	}
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
@@ -209,7 +219,7 @@ func TestCorrectRenderUpdate(t *testing.T) {
 	}
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
@@ -242,7 +252,7 @@ func TestCorrectRenderCreate(t *testing.T) {
 	}
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
@@ -264,7 +274,7 @@ func TestCorrectRenderDetail(t *testing.T) {
 	}
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: "admin_test",
+		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}

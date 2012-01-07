@@ -1,8 +1,7 @@
 package admin
 
 import (
-	"fmt"
-	"io"
+	"errors"
 	"launchpad.net/mgo"
 	"net/http"
 )
@@ -18,13 +17,6 @@ type Admin struct {
 	//created on demand
 	server      *http.ServeMux
 	collections map[string]collectionInfo
-}
-
-type Renderer interface {
-	Detail(io.Writer, interface{})
-	List(io.Writer, []interface{})
-	Create(io.Writer, interface{})
-	Update(io.Writer)
 }
 
 //useful type because these get made so often
@@ -73,21 +65,19 @@ func (a *Admin) collFor(coll string) mgo.Collection {
 
 //ServeHTTP lets *Admin conform to the http.Handler interface for use in web servers
 func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if a.Renderer == nil {
+		a.Renderer = DefaultRenderer{}
+	}
+
 	if a.Auth != nil && !a.Auth(req) {
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintln(w, "You are unauthorized to complete this request")
+		a.Renderer.Unauthorized(w, req)
 		return
 	}
 
 	//we need that database connection. figure out how to do tests
 	if a.Session == nil || a.Database == "" {
-		http.Error(w, "Database not set up properly", http.StatusInternalServerError)
+		a.Renderer.InternalError(w, req, errors.New("Database not configured"))
 		return
-	}
-
-	//default renderer incoming
-	if a.Renderer == nil {
-		//http.Error(w, "No renderer specified", http.StatusInternalServerError)
 	}
 
 	//pass it off to our internal muxer

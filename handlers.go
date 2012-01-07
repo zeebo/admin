@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"launchpad.net/gobson/bson"
 	"net/http"
 	"path"
@@ -26,7 +25,7 @@ func parseRequest(p string) (coll, id string) {
 func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 	if coll == "" || id == "" {
-		http.NotFound(w, req)
+		a.Renderer.NotFound(w, req)
 		return
 	}
 
@@ -34,50 +33,59 @@ func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
 
 	//load into T
 	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(&t); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		a.Renderer.InternalError(w, req, err)
 		return
 	}
 
-	fmt.Fprintf(w, "%v", t)
+	a.Renderer.Detail(w, req, DetailContext{})
 }
 
 //Presents the index page giving an overall view of the database
 func (a *Admin) Index(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 	if coll != "" || id != "" {
-		http.NotFound(w, req)
+		a.Renderer.NotFound(w, req)
 		return
 	}
 
+	a.Renderer.Index(w, req)
 }
 
 //Presents a list of objects in a collection matching filtering/sorting criteria
 func (a *Admin) List(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 	if coll == "" || id != "" {
-		http.NotFound(w, req)
+		a.Renderer.NotFound(w, req)
 	}
 
-	fmt.Fprintf(w, "%s", coll)
+	//grab the data
+
+	a.Renderer.List(w, req, ListContext{})
 }
 
 //Presents a handler that updates an object and shows the results of the update
 func (a *Admin) Update(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 	if coll == "" || id == "" {
-		http.NotFound(w, req)
+		a.Renderer.NotFound(w, req)
 		return
 	}
 
-	fmt.Fprintf(w, "%s / %s", coll, id)
+	//grab the data
+
+	//attempt to update
+
+	a.Renderer.Update(w, req, UpdateContext{})
 }
 
 //Presents a handler that creates an object and shows the results of the create
 func (a *Admin) Create(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 	if coll == "" || id != "" {
-		http.NotFound(w, req)
+		a.Renderer.NotFound(w, req)
 	}
 
-	fmt.Fprintf(w, "%s", coll)
+	//attempt to insert
+
+	a.Renderer.Create(w, req, CreateContext{})
 }

@@ -3,14 +3,21 @@ package admin
 import (
 	"launchpad.net/gobson/bson"
 	"launchpad.net/mgo"
+	"log"
 	"net/http"
+	"os/exec"
 	"testing"
 )
 
-/*
- * Import: mongoimport --drop -d admin_test -c T admin_test.json
- * Export: mongoexport -d admin_test -c T > admin_test.json
- */
+func init() {
+	//Import: mongoimport --drop -d admin_test -c T admin_test.json
+	//Export: mongoexport -d admin_test -c T > admin_test.json
+
+	cmd := exec.Command("mongoimport", "--drop", "-d", "admin_test", "-c", "T", "admin_test.json")
+	if err := cmd.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
 
 type T struct {
 	ID bson.ObjectId `bson:"_id"`
@@ -281,5 +288,4 @@ func TestCorrectRenderDetail(t *testing.T) {
 	if id := r.Last().Params.(DetailContext).Object.(*T).ID.Hex(); id != "4f07c34779bf562daff8640c" {
 		t.Fatalf("Detail returned the wrong object. Expected 4f07c34779bf562daff8640c got %s", id)
 	}
-
 }

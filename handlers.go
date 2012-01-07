@@ -28,16 +28,23 @@ func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
 		a.Renderer.NotFound(w, req)
 		return
 	}
-
 	c, t := a.collFor(coll), a.newType(coll)
 
+	//unknown collection
+	if t == nil {
+		a.Renderer.NotFound(w, req)
+		return
+	}
+
 	//load into T
-	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(&t); err != nil {
+	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(t); err != nil {
 		a.Renderer.InternalError(w, req, err)
 		return
 	}
 
-	a.Renderer.Detail(w, req, DetailContext{})
+	a.Renderer.Detail(w, req, DetailContext{
+		Object: t,
+	})
 }
 
 //Presents the index page giving an overall view of the database
@@ -71,11 +78,25 @@ func (a *Admin) Update(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	c, t := a.collFor(coll), a.newType(coll)
+
+	//unknown collection
+	if t == nil {
+		a.Renderer.NotFound(w, req)
+		return
+	}
+
 	//grab the data
+	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(t); err != nil {
+		a.Renderer.InternalError(w, req, err)
+		return
+	}
 
 	//attempt to update
 
-	a.Renderer.Update(w, req, UpdateContext{})
+	a.Renderer.Update(w, req, UpdateContext{
+		Object: t,
+	})
 }
 
 //Presents a handler that creates an object and shows the results of the create

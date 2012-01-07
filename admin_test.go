@@ -1,12 +1,20 @@
 package admin
 
 import (
+	"launchpad.net/gobson/bson"
 	"launchpad.net/mgo"
 	"net/http"
 	"testing"
 )
 
-type T struct{}
+/*
+ * Import: mongoimport --drop -d admin_test -c T admin_test.json
+ * Export: mongoexport -d admin_test -c T > admin_test.json
+ */
+
+type T struct {
+	ID bson.ObjectId `bson:"_id"`
+}
 
 func TestRegister(t *testing.T) {
 	h := &Admin{}
@@ -144,4 +152,134 @@ func TestInvalidCreate(t *testing.T) {
 	if w.Status != http.StatusNotFound {
 		t.Fatalf("Create did not 404 without collection. Got %d", w.Status)
 	}
+}
+
+func TestCorrectRenderIndex(t *testing.T) {
+	s, _ := mgo.Mongo("")
+	r := &TestRenderer{}
+	h := &Admin{
+		Database: "admin_test",
+		Session:  s,
+		Renderer: r,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Index. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Index" {
+		t.Fatalf("Wrong Renderer called. Expected Index got %s", r.Last().Type)
+	}
+}
+
+func TestCorrectRenderList(t *testing.T) {
+	s, err := mgo.Mongo("localhost")
+	if err != nil {
+		t.Fatalf("Unable to connect to test database: %s", err)
+	}
+	r := &TestRenderer{}
+	h := &Admin{
+		Database: "admin_test",
+		Session:  s,
+		Renderer: r,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/list/T/")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on List. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "List" {
+		t.Fatalf("Wrong Renderer called. Expected List got %s", r.Last().Type)
+	}
+}
+
+func TestCorrectRenderUpdate(t *testing.T) {
+	s, err := mgo.Mongo("localhost")
+	if err != nil {
+		t.Fatalf("Unable to connect to test database: %s", err)
+	}
+	r := &TestRenderer{}
+	h := &Admin{
+		Database: "admin_test",
+		Session:  s,
+		Renderer: r,
+	}
+	h.Register(T{}, "T", nil)
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/update/T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Update. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Update" {
+		t.Fatalf("Wrong Renderer called. Expected Update got %s", r.Last().Type)
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			t.Fatalf("Error checking for correct object. %s", err)
+		}
+	}()
+
+	if id := r.Last().Params.(UpdateContext).Object.(*T).ID.Hex(); id != "4f07c34779bf562daff8640c" {
+		t.Fatalf("Update returned the wrong object. Expected 4f07c34779bf562daff8640c got %s", id)
+	}
+}
+
+func TestCorrectRenderCreate(t *testing.T) {
+	s, err := mgo.Mongo("localhost")
+	if err != nil {
+		t.Fatalf("Unable to connect to test database: %s", err)
+	}
+	r := &TestRenderer{}
+	h := &Admin{
+		Database: "admin_test",
+		Session:  s,
+		Renderer: r,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/create/T/")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Create. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Create" {
+		t.Fatalf("Wrong Renderer called. Expected Create got %s", r.Last().Type)
+	}
+}
+
+func TestCorrectRenderDetail(t *testing.T) {
+	s, err := mgo.Mongo("localhost")
+	if err != nil {
+		t.Fatalf("Unable to connect to test database: %s", err)
+	}
+	r := &TestRenderer{}
+	h := &Admin{
+		Database: "admin_test",
+		Session:  s,
+		Renderer: r,
+	}
+	h.Register(T{}, "T", nil)
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/detail/T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Detail. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Detail" {
+		t.Fatalf("Wrong Renderer called. Expected Detail got %s", r.Last().Type)
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			t.Fatalf("Error checking for correct object. %s", err)
+		}
+	}()
+
+	if id := r.Last().Params.(DetailContext).Object.(*T).ID.Hex(); id != "4f07c34779bf562daff8640c" {
+		t.Fatalf("Detail returned the wrong object. Expected 4f07c34779bf562daff8640c got %s", id)
+	}
+
 }

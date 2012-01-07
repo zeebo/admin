@@ -18,8 +18,14 @@ var (
 
 func init() {
 	flag.Parse()
+
 	//Import: mongoimport --drop -d admin_test -c T admin_test.json
 	//Export: mongoexport -d admin_test -c T > admin_test.json
+
+	//before commit:
+	//mongoexport -d admin_test -c T > admin_test.json
+	//go test -load
+	//git commit -a -m 'msg'
 
 	if *reload {
 		cmd := exec.Command("mongoimport", "--drop", "-d", *database, "-c", "T", *jsonfile)

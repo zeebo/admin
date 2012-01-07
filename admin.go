@@ -74,7 +74,7 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	//we need that database connection. figure out how to do tests
+	//ensure a valid database
 	if a.Session == nil || a.Database == "" {
 		a.Renderer.InternalError(w, req, errors.New("Database not configured"))
 		return

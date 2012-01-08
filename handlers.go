@@ -28,13 +28,12 @@ func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
 		a.Renderer.NotFound(w, req)
 		return
 	}
-	c, t := a.collFor(coll), a.newType(coll)
-
-	//unknown collection
-	if t == nil {
+	if !a.hasType(coll) {
 		a.Renderer.NotFound(w, req)
 		return
 	}
+
+	c, t := a.collFor(coll), a.newType(coll)
 
 	//load into T
 	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(t); err != nil {
@@ -64,6 +63,10 @@ func (a *Admin) List(w http.ResponseWriter, req *http.Request) {
 	if coll == "" || id != "" {
 		a.Renderer.NotFound(w, req)
 	}
+	if !a.hasType(coll) {
+		a.Renderer.NotFound(w, req)
+		return
+	}
 
 	//grab the data
 
@@ -77,14 +80,12 @@ func (a *Admin) Update(w http.ResponseWriter, req *http.Request) {
 		a.Renderer.NotFound(w, req)
 		return
 	}
-
-	c, t := a.collFor(coll), a.newType(coll)
-
-	//unknown collection
-	if t == nil {
+	if !a.hasType(coll) {
 		a.Renderer.NotFound(w, req)
 		return
 	}
+
+	c, t := a.collFor(coll), a.newType(coll)
 
 	//grab the data
 	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(t); err != nil {
@@ -104,6 +105,10 @@ func (a *Admin) Create(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 	if coll == "" || id != "" {
 		a.Renderer.NotFound(w, req)
+	}
+	if !a.hasType(coll) {
+		a.Renderer.NotFound(w, req)
+		return
 	}
 
 	//attempt to insert

@@ -4,19 +4,19 @@ import (
 	"errors"
 	"launchpad.net/mgo"
 	"net/http"
+	"strings"
 )
 
 //Admin is an http.Handler for serving up the admin pages
 type Admin struct {
 	Auth     AuthFunc
 	Session  *mgo.Session
-	Database string
 	Debug    bool
 	Renderer Renderer
 
 	//created on demand
-	server      *http.ServeMux
-	collections map[string]collectionInfo
+	server *http.ServeMux
+	types  map[string]collectionInfo
 }
 
 //useful type because these get made so often
@@ -59,8 +59,9 @@ func (a *Admin) bind(fn adminHandler) http.HandlerFunc {
 }
 
 //Returns the mgo.Collection for the specified collection
-func (a *Admin) collFor(coll string) mgo.Collection {
-	return a.Session.DB(a.Database).C(coll)
+func (a *Admin) collFor(dbcoll string) mgo.Collection {
+	pieces := strings.Split(dbcoll, ".")
+	return a.Session.DB(pieces[0]).C(pieces[1])
 }
 
 //ServeHTTP lets *Admin conform to the http.Handler interface for use in web servers
@@ -75,8 +76,8 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	//ensure a valid database
-	if a.Session == nil || a.Database == "" {
-		a.Renderer.InternalError(w, req, errors.New("Database not configured"))
+	if a.Session == nil {
+		a.Renderer.InternalError(w, req, errors.New("Mongo session not configured"))
 		return
 	}
 

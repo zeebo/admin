@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	database = flag.String("db", "admin_test", "Database for mongo connnection")
 	reload   = flag.Bool("load", false, "Run mongoimport on the json file for the database")
 	jsonfile = flag.String("json", "admin_test.json", "Json file for loading into the database")
 )
@@ -28,7 +27,7 @@ func init() {
 	//git commit -a -m 'msg'
 
 	if *reload {
-		cmd := exec.Command("mongoimport", "--drop", "-d", *database, "-c", "T", *jsonfile)
+		cmd := exec.Command("mongoimport", "--drop", "-d", "admin_test", "-c", "T", *jsonfile)
 		if err := cmd.Run(); err != nil {
 			log.Fatal(err)
 		}
@@ -39,18 +38,18 @@ type T struct {
 	ID bson.ObjectId `bson:"_id"`
 }
 
-func TestRegister(t *testing.T) {
+func TestRegisterWorks(t *testing.T) {
 	h := &Admin{}
 
-	h.Register(T{}, "T", nil)
+	h.Register(T{}, "admin_test.T", nil)
 
-	ans := h.newType("T")
+	ans := h.newType("admin_test.T")
 	if _, ok := ans.(*T); !ok {
 		t.Fatalf("Type incorrect. Expected *admin.T, got %T", ans)
 	}
 }
 
-func TestRegisterFail(t *testing.T) {
+func TestRegisterDuplicate(t *testing.T) {
 	h := &Admin{}
 
 	defer func() {
@@ -59,17 +58,17 @@ func TestRegisterFail(t *testing.T) {
 		}
 	}()
 
-	h.Register(T{}, "T", nil)
-	h.Register(T{}, "T", nil)
+	h.Register(T{}, "admin_test.T", nil)
+	h.Register(T{}, "admin_test.T", nil)
 }
 
 func TestNewTypeNewInstance(t *testing.T) {
 	h := &Admin{}
 
-	h.Register(T{}, "T", nil)
+	h.Register(T{}, "admin_test.T", nil)
 
-	ans1 := h.newType("T")
-	ans2 := h.newType("T")
+	ans1 := h.newType("admin_test.T")
+	ans2 := h.newType("admin_test.T")
 	if ans1.(*T) == ans2.(*T) {
 		t.Fatal("getType returned identical instances")
 	}
@@ -100,8 +99,7 @@ func TestAuthorized(t *testing.T) {
 func TestInvalidDetail(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: *database,
-		Session:  s,
+		Session: s,
 	}
 	var w *TestResponseWriter
 
@@ -110,7 +108,7 @@ func TestInvalidDetail(t *testing.T) {
 		t.Fatalf("Detail did not 404 without collection. Got %d", w.Status)
 	}
 
-	w = Get(t, h, "/detail/T/")
+	w = Get(t, h, "/detail/admin_test.T/")
 	if w.Status != http.StatusNotFound {
 		t.Fatalf("Detail did not 404 without id. Got %d", w.Status)
 	}
@@ -119,8 +117,7 @@ func TestInvalidDetail(t *testing.T) {
 func TestInvalidIndex(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: *database,
-		Session:  s,
+		Session: s,
 	}
 	var w *TestResponseWriter
 
@@ -133,8 +130,7 @@ func TestInvalidIndex(t *testing.T) {
 func TestInvalidList(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: *database,
-		Session:  s,
+		Session: s,
 	}
 	var w *TestResponseWriter
 
@@ -147,8 +143,7 @@ func TestInvalidList(t *testing.T) {
 func TestInvalidUpdate(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: *database,
-		Session:  s,
+		Session: s,
 	}
 	var w *TestResponseWriter
 
@@ -157,7 +152,7 @@ func TestInvalidUpdate(t *testing.T) {
 		t.Fatalf("Update did not 404 without collection. Got %d", w.Status)
 	}
 
-	w = Get(t, h, "/update/T/")
+	w = Get(t, h, "/update/admin_test.T/")
 	if w.Status != http.StatusNotFound {
 		t.Fatalf("Update did not 404 without id. Got %d", w.Status)
 	}
@@ -166,8 +161,7 @@ func TestInvalidUpdate(t *testing.T) {
 func TestInvalidCreate(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	h := &Admin{
-		Database: *database,
-		Session:  s,
+		Session: s,
 	}
 	var w *TestResponseWriter
 
@@ -181,7 +175,6 @@ func TestCorrectRenderIndex(t *testing.T) {
 	s, _ := mgo.Mongo("")
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
@@ -203,13 +196,13 @@ func TestCorrectRenderList(t *testing.T) {
 	}
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
+	h.Register(T{}, "admin_test.T", nil)
 	var w *TestResponseWriter
 
-	w = Get(t, h, "/list/T/")
+	w = Get(t, h, "/list/admin_test.T/")
 	if w.Status != http.StatusOK {
 		t.Fatalf("Wrong return type on List. Expected 200 got %d", w.Status)
 	}
@@ -225,14 +218,13 @@ func TestCorrectRenderUpdate(t *testing.T) {
 	}
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
-	h.Register(T{}, "T", nil)
+	h.Register(T{}, "admin_test.T", nil)
 	var w *TestResponseWriter
 
-	w = Get(t, h, "/update/T/4f07c34779bf562daff8640c")
+	w = Get(t, h, "/update/admin_test.T/4f07c34779bf562daff8640c")
 	if w.Status != http.StatusOK {
 		t.Fatalf("Wrong return type on Update. Expected 200 got %d", w.Status)
 	}
@@ -258,13 +250,13 @@ func TestCorrectRenderCreate(t *testing.T) {
 	}
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
+	h.Register(T{}, "admin_test.T", nil)
 	var w *TestResponseWriter
 
-	w = Get(t, h, "/create/T/")
+	w = Get(t, h, "/create/admin_test.T/")
 	if w.Status != http.StatusOK {
 		t.Fatalf("Wrong return type on Create. Expected 200 got %d", w.Status)
 	}
@@ -280,14 +272,13 @@ func TestCorrectRenderDetail(t *testing.T) {
 	}
 	r := &TestRenderer{}
 	h := &Admin{
-		Database: *database,
 		Session:  s,
 		Renderer: r,
 	}
-	h.Register(T{}, "T", nil)
+	h.Register(T{}, "admin_test.T", nil)
 	var w *TestResponseWriter
 
-	w = Get(t, h, "/detail/T/4f07c34779bf562daff8640c")
+	w = Get(t, h, "/detail/admin_test.T/4f07c34779bf562daff8640c")
 	if w.Status != http.StatusOK {
 		t.Fatalf("Wrong return type on Detail. Expected 200 got %d", w.Status)
 	}
@@ -303,5 +294,87 @@ func TestCorrectRenderDetail(t *testing.T) {
 
 	if id := r.Last().Params.(DetailContext).Object.(*T).ID.Hex(); id != "4f07c34779bf562daff8640c" {
 		t.Fatalf("Detail returned the wrong object. Expected 4f07c34779bf562daff8640c got %s", id)
+	}
+}
+
+func TestRegisterNoDatabase(t *testing.T) {
+	h := &Admin{}
+	defer func() {
+		if err := recover(); err == nil {
+			t.Fatalf("No panic with invalid type")
+		}
+	}()
+	h.Register(T{}, "T", nil)
+}
+
+func TestUpdateUnknownCollection(t *testing.T) {
+	s, _ := mgo.Mongo("")
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  s,
+		Renderer: r,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/update/unknown.T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Expected 404 got %d", w.Status)
+	}
+	if r.Last().Type != "NotFound" {
+		t.Fatalf("Wrong Renderer called. Expected NotFound got %s", r.Last().Type)
+	}
+}
+
+func TestDetailUnknownCollection(t *testing.T) {
+	s, _ := mgo.Mongo("")
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  s,
+		Renderer: r,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/detail/unknown.T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Expected 404 got %d", w.Status)
+	}
+	if r.Last().Type != "NotFound" {
+		t.Fatalf("Wrong Renderer called. Expected NotFound got %s", r.Last().Type)
+	}
+}
+
+func TestListUnknownCollection(t *testing.T) {
+	s, _ := mgo.Mongo("")
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  s,
+		Renderer: r,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/list/unknown.T/")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Expected 404 got %d", w.Status)
+	}
+	if r.Last().Type != "NotFound" {
+		t.Fatalf("Wrong Renderer called. Expected NotFound got %s", r.Last().Type)
+	}
+}
+
+func TestCreateUnknownCollection(t *testing.T) {
+	s, _ := mgo.Mongo("")
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  s,
+		Renderer: r,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/create/unknown.T/")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Expected 404 got %d", w.Status)
+	}
+	if r.Last().Type != "NotFound" {
+		t.Fatalf("Wrong Renderer called. Expected NotFound got %s", r.Last().Type)
 	}
 }

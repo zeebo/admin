@@ -68,9 +68,25 @@ func (a *Admin) List(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	//grab the data
+	c := a.collFor(coll)
 
-	a.Renderer.List(w, req, ListContext{})
+	//grab the data
+	var items []interface{}
+	iter := listParse(c, req.URL.Query())
+	for {
+		t := a.newType(coll)
+		if !iter.Next(t) {
+			break
+		}
+		items = append(items, t)
+	}
+	if err := iter.Err(); err != nil {
+		a.Renderer.InternalError(w, req, err)
+	}
+
+	a.Renderer.List(w, req, ListContext{
+		Objects: items,
+	})
 }
 
 //Presents a handler that updates an object and shows the results of the update

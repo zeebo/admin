@@ -38,7 +38,7 @@ type DetailContext struct {
 //It comes loaded with a slice of objects selected by the List view. If no
 //objects match the passed in query, the slice will be nil.
 type ListContext struct {
-	Objects interface{}
+	Objects []interface{}
 }
 
 //UpdateContext is the type passed in to the Update method.

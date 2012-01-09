@@ -24,10 +24,14 @@ func parseRequest(p string) (coll, id string) {
 //Presents the detail view for an object in a collection
 func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
+
+	//ensure we have both a collection key and an id
 	if coll == "" || id == "" {
 		a.Renderer.NotFound(w, req)
 		return
 	}
+
+	//make sure we know about the requested collection
 	if !a.hasType(coll) {
 		a.Renderer.NotFound(w, req)
 		return
@@ -53,20 +57,29 @@ func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
 //Presents the index page giving an overall view of the database
 func (a *Admin) Index(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
+
+	//ensure we have neither a collection nor an id
 	if coll != "" || id != "" {
 		a.Renderer.NotFound(w, req)
 		return
 	}
 
-	a.Renderer.Index(w, req, IndexContext{})
+	a.generateIndexCache()
+	a.Renderer.Index(w, req, IndexContext{
+		Managed: a.index_cache,
+	})
 }
 
 //Presents a list of objects in a collection matching filtering/sorting criteria
 func (a *Admin) List(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
+
+	//ensure we have a collection, but no id
 	if coll == "" || id != "" {
 		a.Renderer.NotFound(w, req)
 	}
+
+	//make sure we know about the requested collection
 	if !a.hasType(coll) {
 		a.Renderer.NotFound(w, req)
 		return
@@ -84,6 +97,8 @@ func (a *Admin) List(w http.ResponseWriter, req *http.Request) {
 		}
 		items = append(items, t)
 	}
+
+	//report any errors our iterator made
 	if err := iter.Err(); err != nil {
 		a.Renderer.InternalError(w, req, err)
 	}
@@ -96,10 +111,14 @@ func (a *Admin) List(w http.ResponseWriter, req *http.Request) {
 //Presents a handler that updates an object and shows the results of the update
 func (a *Admin) Update(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
+
+	//ensure we have both an id and a collection
 	if coll == "" || id == "" {
 		a.Renderer.NotFound(w, req)
 		return
 	}
+
+	//make sure we know about the requested collection
 	if !a.hasType(coll) {
 		a.Renderer.NotFound(w, req)
 		return
@@ -127,9 +146,13 @@ func (a *Admin) Update(w http.ResponseWriter, req *http.Request) {
 //Presents a handler that creates an object and shows the results of the create
 func (a *Admin) Create(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
+
+	//ensure we have a collection but no id
 	if coll == "" || id != "" {
 		a.Renderer.NotFound(w, req)
 	}
+
+	//make sure we know about the requested collection
 	if !a.hasType(coll) {
 		a.Renderer.NotFound(w, req)
 		return

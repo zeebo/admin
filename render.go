@@ -1,6 +1,9 @@
 package admin
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 type Renderer interface {
 	//Error modes
@@ -60,7 +63,16 @@ type CreateContext struct {
 	Errors map[string]string
 }
 
+//IndexContext is the type passed in to the Index method. It contains the
+//databases and collections being managed by the admin.
 type IndexContext struct {
+	Managed map[string][]string
+}
+
+//Key takes a database and collection and maps it to the key for urls. For
+//example, Key("db", "coll") -> db.coll
+func (i *IndexContext) Key(db, coll string) string {
+	return fmt.Sprintf("%s.%s", db, coll)
 }
 
 //DefaultRenderer conforms to the Renderer interface and uses some magic templates

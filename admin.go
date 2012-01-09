@@ -15,8 +15,9 @@ type Admin struct {
 	Renderer Renderer
 
 	//created on demand
-	server *http.ServeMux
-	types  map[string]collectionInfo
+	server      *http.ServeMux
+	types       map[string]collectionInfo
+	index_cache map[string][]string
 }
 
 //useful type because these get made so often
@@ -47,6 +48,24 @@ func (a *Admin) generateMux() {
 	a.server = http.NewServeMux()
 	for r, fn := range routes {
 		a.server.Handle(r, http.StripPrefix(r, a.bind(fn)))
+	}
+}
+
+//generateIndexCache generates the values needed for IndexContext and stores
+//them for efficient lookup.
+func (a *Admin) generateIndexCache() {
+	if a.index_cache != nil {
+		return
+	}
+
+	a.index_cache = make(map[string][]string)
+	for key := range a.types {
+		pieces := strings.Split(key, ".")
+		if _, ex := a.index_cache[pieces[0]]; ex {
+			a.index_cache[pieces[0]] = append(a.index_cache[pieces[0]], pieces[1])
+		} else {
+			a.index_cache[pieces[0]] = []string{pieces[1]}
+		}
 	}
 }
 

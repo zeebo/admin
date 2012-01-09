@@ -58,7 +58,7 @@ func (a *Admin) Index(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	a.Renderer.Index(w, req)
+	a.Renderer.Index(w, req, IndexContext{})
 }
 
 //Presents a list of objects in a collection matching filtering/sorting criteria

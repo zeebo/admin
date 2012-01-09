@@ -410,3 +410,21 @@ func TestListInvalidParams(t *testing.T) {
 		t.Fatalf("Expected 20 objects on page. Got %d", len(context.Objects))
 	}
 }
+
+func TestListSortingOrder(t *testing.T) {
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  session,
+		Renderer: r,
+	}
+	h.Register(T2{}, "admin_test.T2", nil)
+
+	Get(t, h, "/list/admin_test.T2/?sort_v=desc")
+	context := r.Last().Params.(ListContext)
+	for i, obj := range context.Objects {
+		if obj.(*T2).V != 49-i {
+			t.Fatalf("Expected object %d. Got %d", 49-i, obj.(*T2).V)
+		}
+	}
+
+}

@@ -50,9 +50,10 @@ func (r *TestRenderer) Detail(w http.ResponseWriter, req *http.Request, c Detail
 	})
 }
 
-func (r *TestRenderer) Index(w http.ResponseWriter, req *http.Request) {
+func (r *TestRenderer) Index(w http.ResponseWriter, req *http.Request, c IndexContext) {
 	r.Calls = append(r.Calls, TestCall{
-		Type: "Index",
+		Type:   "Index",
+		Params: c,
 	})
 }
 

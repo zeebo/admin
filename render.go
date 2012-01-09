@@ -21,7 +21,7 @@ type Renderer interface {
 	//of an error in processing the form. Relevant details will be in the 
 	//passed in context.
 	Detail(http.ResponseWriter, *http.Request, DetailContext)
-	Index(http.ResponseWriter, *http.Request)
+	Index(http.ResponseWriter, *http.Request, IndexContext)
 	List(http.ResponseWriter, *http.Request, ListContext)
 	Update(http.ResponseWriter, *http.Request, UpdateContext)
 	Create(http.ResponseWriter, *http.Request, CreateContext)
@@ -60,6 +60,9 @@ type CreateContext struct {
 	Errors map[string]string
 }
 
+type IndexContext struct {
+}
+
 //DefaultRenderer conforms to the Renderer interface and uses some magic templates
 //to create a pretty default interface.
 type DefaultRenderer struct{}
@@ -86,7 +89,7 @@ func (r DefaultRenderer) Detail(w http.ResponseWriter, req *http.Request, c Deta
 }
 
 //Index presents an overall view of the database and the managed collections.
-func (r DefaultRenderer) Index(w http.ResponseWriter, req *http.Request) {
+func (r DefaultRenderer) Index(w http.ResponseWriter, req *http.Request, c IndexContext) {
 
 }
 

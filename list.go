@@ -18,6 +18,10 @@ func grabInt(v url.Values, key string, def int) int {
 func listParse(c mgo.Collection, v url.Values) *mgo.Iter {
 	page, numpage := grabInt(v, "page", 0), grabInt(v, "numpage", 20)
 
-	query := c.Find(nil).Skip(numpage * page).Limit(numpage)
+	if page == 0 {
+		page = 1
+	}
+
+	query := c.Find(nil).Skip(numpage * (page - 1)).Limit(numpage)
 	return query.Iter()
 }

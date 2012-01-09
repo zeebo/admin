@@ -37,6 +37,10 @@ func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
 
 	//load into T
 	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(t); err != nil {
+		if err.Error() == "Document not found" {
+			a.Renderer.NotFound(w, req)
+			return
+		}
 		a.Renderer.InternalError(w, req, err)
 		return
 	}
@@ -105,6 +109,10 @@ func (a *Admin) Update(w http.ResponseWriter, req *http.Request) {
 
 	//grab the data
 	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(t); err != nil {
+		if err.Error() == "Document not found" {
+			a.Renderer.NotFound(w, req)
+			return
+		}
 		a.Renderer.InternalError(w, req, err)
 		return
 	}

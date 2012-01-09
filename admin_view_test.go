@@ -1,6 +1,9 @@
 package admin
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 type TestCall struct {
 	Type   string
@@ -30,6 +33,7 @@ func (r *TestRenderer) InternalError(w http.ResponseWriter, req *http.Request, e
 		Type:   "InternalError",
 		Params: err,
 	})
+	log.Println("Internal:", err)
 	w.WriteHeader(http.StatusInternalServerError)
 }
 

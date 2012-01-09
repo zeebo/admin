@@ -52,7 +52,7 @@ func init() {
 				log.Fatalf("Error exporting %s: %s", t, err)
 			}
 		}
-		os.Exit(0)
+		log.Fatal("Data exported successfully.")
 	}
 
 	if *load {

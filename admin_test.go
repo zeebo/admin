@@ -427,4 +427,44 @@ func TestListSortingOrder(t *testing.T) {
 		}
 	}
 
+	Get(t, h, "/list/admin_test.T2/?sort_v=desc&page=2")
+	context = r.Last().Params.(ListContext)
+	for i, obj := range context.Objects {
+		if obj.(*T2).V != 29-i {
+			t.Fatalf("Expected object %d. Got %d", 49-i, obj.(*T2).V)
+		}
+	}
+
+	Get(t, h, "/list/admin_test.T2/?sort_v=desc&page=2&numpage=5")
+	context = r.Last().Params.(ListContext)
+	for i, obj := range context.Objects {
+		if obj.(*T2).V != 44-i {
+			t.Fatalf("Expected object %d. Got %d", 49-i, obj.(*T2).V)
+		}
+	}
+
+	Get(t, h, "/list/admin_test.T2/?sort_v=asc")
+	context = r.Last().Params.(ListContext)
+	for i, obj := range context.Objects {
+		if obj.(*T2).V != i {
+			t.Fatalf("Expected object %d. Got %d", 49-i, obj.(*T2).V)
+		}
+	}
+}
+
+func TestListSortingInvalid(t *testing.T) {
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  session,
+		Renderer: r,
+	}
+	h.Register(T2{}, "admin_test.T2", nil)
+
+	Get(t, h, "/list/admin_test.T2/?sort_no_field=desc")
+	context := r.Last().Params.(ListContext)
+	for i, obj := range context.Objects {
+		if obj.(*T2).V != i {
+			t.Fatalf("Expected object %d. Got %d", 49-i, obj.(*T2).V)
+		}
+	}
 }

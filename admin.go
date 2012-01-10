@@ -9,16 +9,24 @@ import (
 
 //Admin is an http.Handler for serving up the admin pages
 type Admin struct {
-	Auth     AuthFunc
-	Session  *mgo.Session
-	Debug    bool
-	Renderer Renderer
-	Routes   map[string]string
+	Auth     AuthFunc          //If not nil, the AuthFunc is called on every request to determine if the request should be handled or not.
+	Session  *mgo.Session      //Session is the mongo session with the databases and collections to be handled.
+	Renderer Renderer          //If nil, a default renderer is used to render the admin pages.
+	Routes   map[string]string //Routes lets you change the url paths for the admin. If nil, uses DefaultRoutes.
 
 	//created on demand
 	server      *http.ServeMux
 	types       map[string]collectionInfo
 	index_cache map[string][]string
+}
+
+//DefaultRoutes is the mapping of actions to url paths by default.
+var DefaultRoutes = map[string]string{
+	"index":  "/",
+	"list":   "/list/",
+	"update": "/update/",
+	"create": "/create/",
+	"detail": "/detail/",
 }
 
 //useful type because these get made so often
@@ -30,7 +38,7 @@ type AuthFunc func(*http.Request) bool
 //adminHandler is a type representing a handler function on an *Admin
 type adminHandler func(*Admin, http.ResponseWriter, *http.Request)
 
-//routes define the routes for the admin
+//routes defines the mapping of type to function for the admin
 var routes = map[string]adminHandler{
 	"index":  (*Admin).index,
 	"list":   (*Admin).list,
@@ -46,13 +54,7 @@ func (a *Admin) generateMux() {
 		return
 	}
 	if a.Routes == nil {
-		a.Routes = map[string]string{
-			"index":  "/",
-			"list":   "/list/",
-			"update": "/update/",
-			"create": "/create/",
-			"detail": "/detail/",
-		}
+		a.Routes = DefaultRoutes
 	}
 
 	a.server = http.NewServeMux()

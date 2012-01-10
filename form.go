@@ -12,9 +12,10 @@ type Formable interface {
 	Validate() error
 }
 
-//TemplateContext is the value passed in as the dot to the template for forms.
-//It has methods for returning the values in the field and any errors in
-//attempting to validate the form. For example if we had the struct
+//TemplateContext is the value passed in as the dot to the template for forms
+//by the default renderer. It has methods for returning the values in the field
+//and any errors in attempting to validate the form. For example if we had the
+//type
 //
 //	type MyForm struct {
 //		X int
@@ -24,22 +25,19 @@ type Formable interface {
 //a simple template that uses the TemplateContext for this struct could look like
 //
 //	func (m *MyForm) GetTemplate() string {
-//		return `
-//			<form method="post" action="{{.Action}}">
-//				<span class="errors">{{.Errors "X"}}</span>
-//				<input type="text" value="{{.Values "X"}}" name="X">
-//				<span class="errors">{{.Errors "Y"}}</span>
-//				<input type="text" value="{{.Values "Y"}}" name="Y">
-//				<input type="submit">
-//			</form>`
+//		return `<span class="errors">{{.Errors "X"}}</span>
+//			<input type="text" value="{{.Values "X"}}" name="X">
+//			<span class="errors">{{.Errors "Y"}}</span>
+//			<input type="text" value="{{.Values "Y"}}" name="Y">
+//			<input type="submit">`
 //	}
 //
 //The form is rendered through the html/template package and will do necessary
-//escaping as such.
+//escaping as such. It is the renderers responsibility to wrap the fields
+//in the form.
 type TemplateContext struct {
 	Errors map[string]string
 	Values map[string]string
-	Action string
 }
 
 //Error returns any error text from validation for a specific field.

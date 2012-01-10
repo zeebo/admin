@@ -77,48 +77,48 @@ func (i *IndexContext) Key(db, coll string) string {
 	return fmt.Sprintf("%s.%s", db, coll)
 }
 
-//DefaultRenderer conforms to the Renderer interface and uses some magic templates
+//defaultRenderer conforms to the Renderer interface and uses some magic templates
 //to create a pretty default interface.
-type DefaultRenderer struct{}
+type defaultRenderer struct{}
 
 //NotFound presents a basic 404 with no special body.
-func (r DefaultRenderer) NotFound(w http.ResponseWriter, req *http.Request) {
+func (r defaultRenderer) NotFound(w http.ResponseWriter, req *http.Request) {
 	http.NotFound(w, req)
 }
 
 //InternalError presents a basic 500 not suitable for production. Errors should be logged
 //and not displayed to the end user.
-func (r DefaultRenderer) InternalError(w http.ResponseWriter, req *http.Request, err error) {
+func (r defaultRenderer) InternalError(w http.ResponseWriter, req *http.Request, err error) {
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
 
 //Unauthorized presents a simple unauthorized page.
-func (r DefaultRenderer) Unauthorized(w http.ResponseWriter, req *http.Request) {
+func (r defaultRenderer) Unauthorized(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }
 
 //Detail presents the detail view of an object.
-func (r DefaultRenderer) Detail(w http.ResponseWriter, req *http.Request, c DetailContext) {
+func (r defaultRenderer) Detail(w http.ResponseWriter, req *http.Request, c DetailContext) {
 
 }
 
 //Index presents an overall view of the database and the managed collections.
-func (r DefaultRenderer) Index(w http.ResponseWriter, req *http.Request, c IndexContext) {
+func (r defaultRenderer) Index(w http.ResponseWriter, req *http.Request, c IndexContext) {
 
 }
 
 //List presents all of the objects of a specific list with the columns and order given by the options
 //the type was loaded with.
-func (r DefaultRenderer) List(w http.ResponseWriter, req *http.Request, c ListContext) {
+func (r defaultRenderer) List(w http.ResponseWriter, req *http.Request, c ListContext) {
 
 }
 
 //Update presents a success page or the errors when attempting to update an object.
-func (r DefaultRenderer) Update(w http.ResponseWriter, req *http.Request, c UpdateContext) {
+func (r defaultRenderer) Update(w http.ResponseWriter, req *http.Request, c UpdateContext) {
 
 }
 
 //Create presents a success page or the errors when attempting to create an object.
-func (r DefaultRenderer) Create(w http.ResponseWriter, req *http.Request, c CreateContext) {
+func (r defaultRenderer) Create(w http.ResponseWriter, req *http.Request, c CreateContext) {
 
 }

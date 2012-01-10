@@ -2,6 +2,8 @@ package admin
 
 import (
 	"fmt"
+	"html/template"
+	"io"
 	"net/http"
 )
 
@@ -33,9 +35,11 @@ type Renderer interface {
 }
 
 //DetailContext is the type passed to the Detail method.
-//It comes loaded with the instance of the object found.
+//It comes loaded with the instance of the object found, and a Form that
+//represents the form for the object.
 type DetailContext struct {
 	Object interface{}
+	Form   Form
 }
 
 //ListContext is the type passed in to the List method.
@@ -49,17 +53,21 @@ type ListContext struct {
 //It comes with booleans indicating if the update was attempted and successful.
 //It also comes with an instance of the object with the matching query.
 //The object always reflects the most recent data in the database.
+//It also comes with a Form that represents the form for the object.
 type UpdateContext struct {
 	Object    interface{}
 	Attempted bool
 	Success   bool
+	Form      Form
 }
 
 //CreateContext is the type passed in to the Create method.
 //It comes with booleans indicating if the creation was attempted and successful.
+//It also comes with a Form that represents the form for the object.
 type CreateContext struct {
 	Attempted bool
 	Success   bool
+	Form      Form
 }
 
 //IndexContext is the type passed in to the Index method. It contains the
@@ -72,6 +80,18 @@ type IndexContext struct {
 //example, Key("db", "coll") -> db.coll
 func (i *IndexContext) Key(db, coll string) string {
 	return fmt.Sprintf("%s.%s", db, coll)
+}
+
+//Form encapsulates a form with a context with the ability to execute and output
+//the correct html.
+type Form struct {
+	template *template.Template
+	context  TemplateContext
+}
+
+//Execute calls the template with the context and executes it to the writer
+func (f *Form) Execute(w io.Writer) error {
+	return f.template.Execute(w, f.context)
 }
 
 //defaultRenderer conforms to the Renderer interface and uses some magic templates

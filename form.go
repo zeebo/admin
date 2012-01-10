@@ -63,9 +63,23 @@ func (t *TemplateContext) Value(field string) string {
 //
 //	type NoNumberField string
 //	func (n *NoNumberField) Validate() error {
-//		if strings.IndexAny(*n, "0123456789") != -1 {
+//		if strings.IndexAny(string(*n), "0123456789") != -1 {
 //			return errors.New("This field must contain no numbers.")
 //		}
+//		return nil
+//	}
+//
+//or we can make a string field that just removes all the numbers like
+//
+//	type CleanNumbersField string
+//	func (n *CleanNumbersField) Validate() error {
+//		*n = CleanNumbersField(strings.Map(func(c rune) rune {
+//			switch c {
+//			case '0','1','2','3','4','5','6','7','8','9':
+//				return -1
+//			}
+//			return c
+//		}, string(*n)))
 //		return nil
 //	}
 //

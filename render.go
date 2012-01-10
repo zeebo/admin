@@ -33,8 +33,7 @@ type Renderer interface {
 }
 
 //DetailContext is the type passed to the Detail method.
-//It comes loaded with the instance of the object found. If the object cannot
-//be found, the value wil be nil.
+//It comes loaded with the instance of the object found.
 type DetailContext struct {
 	Object interface{}
 }
@@ -47,22 +46,20 @@ type ListContext struct {
 }
 
 //UpdateContext is the type passed in to the Update method.
-//It comes with a map[string]string of Field -> Error values if there were any
-//in the processing of the Update request. If there were no errors then 
-//the map will be nil. It also comes with an instance of the object with the 
-//matching query. If there is no matching object, it will be nil. The object
-//always reflects the most recent data in the database. 
+//It comes with booleans indicating if the update was attempted and successful.
+//It also comes with an instance of the object with the matching query.
+//The object always reflects the most recent data in the database.
 type UpdateContext struct {
-	Object interface{}
-	Errors map[string]string
+	Object    interface{}
+	Attempted bool
+	Success   bool
 }
 
 //CreateContext is the type passed in to the Create method.
-//It comes with a map[string]string of Field -> Error vlaues if there were any
-//in the processing of the Create request. If there were no erros then the
-//map will be nil.
+//It comes with booleans indicating if the creation was attempted and successful.
 type CreateContext struct {
-	Errors map[string]string
+	Attempted bool
+	Success   bool
 }
 
 //IndexContext is the type passed in to the Index method. It contains the

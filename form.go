@@ -36,14 +36,14 @@ type Formable interface {
 //escaping as such. It is the renderers responsibility to wrap the fields
 //in the form.
 type TemplateContext struct {
-	Errors map[string]string
+	Errors map[string]error
 	Values map[string]string
 }
 
 //Error returns any error text from validation for a specific field.
 func (t *TemplateContext) Error(field string) string {
-	if v, ex := t.Errors[field]; ex {
-		return v
+	if v, ex := t.Errors[field]; ex && v != nil {
+		return v.Error()
 	}
 	return ""
 }
@@ -54,36 +54,4 @@ func (t *TemplateContext) Value(field string) string {
 		return v
 	}
 	return ""
-}
-
-//Validator represents a type that can be validated by the form processor. For
-//example, we can make a string field that cannot have numbers like
-//
-//	type NoNumberField string
-//	func (n *NoNumberField) Validate() error {
-//		if strings.IndexAny(string(*n), "0123456789") != -1 {
-//			return errors.New("This field must contain no numbers.")
-//		}
-//		return nil
-//	}
-//
-//or we can make a string field that just removes all the numbers like
-//
-//	type CleanNumbersField string
-//	func (n *CleanNumbersField) Validate() error {
-//		*n = CleanNumbersField(strings.Map(func(c rune) rune {
-//			switch c {
-//			case '0','1','2','3','4','5','6','7','8','9':
-//				return -1
-//			}
-//			return c
-//		}, string(*n)))
-//		return nil
-//	}
-//
-//The form processor will check if the type of the field is a Validator and do
-//any validation required. This method is allowed to change the data for the
-//field.
-type Validator interface {
-	Validate() error
 }

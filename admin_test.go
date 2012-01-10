@@ -11,9 +11,24 @@ type T struct {
 	ID bson.ObjectId `bson:"_id"`
 }
 
+func (t T) GetTemplate() string {
+	return ``
+}
+
 type T2 struct {
 	ID bson.ObjectId `bson:"_id"`
 	V  int           `bson:"v"`
+}
+
+func (t T2) GetTemplate() string {
+	return ``
+}
+
+type T3 struct {
+}
+
+func (t T3) GetTemplate() string {
+	return `{{`
 }
 
 func TestRegisterWorks(t *testing.T) {
@@ -38,6 +53,18 @@ func TestRegisterDuplicate(t *testing.T) {
 
 	h.Register(T{}, "admin_test.T", nil)
 	h.Register(T{}, "admin_test.T", nil)
+}
+
+func TestRegisterBadTemplate(t *testing.T) {
+	h := &Admin{}
+
+	defer func() {
+		if err := recover(); err == nil {
+			t.Fatal("No panic when attempting to register bad template")
+		}
+	}()
+
+	h.Register(T3{}, "admin_test.T3", nil)
 }
 
 func TestNewTypeNewInstance(t *testing.T) {

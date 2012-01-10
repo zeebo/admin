@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+//Renderer represents a type that knows how to present content for the admin to
+//the browser.
 type Renderer interface {
 	//Error modes
 	//

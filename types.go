@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"html/template"
 	"reflect"
 	"strings"
 )
@@ -15,14 +16,16 @@ type Options struct {
 //Stores info about a specific collection, like the type of the object it
 //represents and any options used in specifying the type
 type collectionInfo struct {
-	Options *Options
-	Type    reflect.Type
+	Options  *Options
+	Type     reflect.Type
+	Template *template.Template
 }
 
 //Registers the type/collection pair in the admin. Panics if two types are mapped
 //to the same collection. Dbcolls are dot separated database/collection specifiers.
-//Panics if no database is specified.
-func (a *Admin) Register(typ interface{}, dbcoll string, opt *Options) {
+//Panics if no database is specified. Panics if the template returned by the Formable
+//has any compilation errors.
+func (a *Admin) Register(typ Formable, dbcoll string, opt *Options) {
 	if a.types == nil {
 		a.types = make(map[string]collectionInfo)
 	}
@@ -33,7 +36,10 @@ func (a *Admin) Register(typ interface{}, dbcoll string, opt *Options) {
 	if ci, ok := a.types[dbcoll]; ok {
 		panic(fmt.Sprintf("db.collection already registered. Had %q->%s . Got %q->%s", dbcoll, ci.Type, dbcoll, t))
 	}
-	a.types[dbcoll] = collectionInfo{opt, t}
+	//compile the template
+	templ := template.Must(template.New("form").Parse(typ.GetTemplate()))
+
+	a.types[dbcoll] = collectionInfo{opt, t, templ}
 }
 
 //Unregisters the information for the colleciton. Panics if you attempt to unregister

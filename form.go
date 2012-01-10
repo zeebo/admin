@@ -6,6 +6,10 @@ type Formable interface {
 	//form on the page. For more details on what gets sent into the form
 	//and what methods are present for rendering, see TemplateContext
 	GetTemplate() string
+
+	//Validate is called on the type after all the individual fields have been
+	//validated and no errors have occured.
+	Validate() error
 }
 
 //TemplateContext is the value passed in as the dot to the template for forms.
@@ -52,4 +56,22 @@ func (t *TemplateContext) Value(field string) string {
 		return v
 	}
 	return ""
+}
+
+//Validator represents a type that can be validated by the form processor. For
+//example, we can make a string field that cannot have numbers like
+//
+//	type NoNumberField string
+//	func (n *NoNumberField) Validate() error {
+//		if strings.IndexAny(*n, "0123456789") != -1 {
+//			return errors.New("This field must contain no numbers.")
+//		}
+//		return nil
+//	}
+//
+//The form processor will check if the type of the field is a Validator and do
+//any validation required. This method is allowed to change the data for the
+//field.
+type Validator interface {
+	Validate() error
 }

@@ -22,7 +22,7 @@ func parseRequest(p string) (coll, id string) {
 }
 
 //Presents the detail view for an object in a collection
-func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
+func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 
 	//ensure we have both a collection key and an id
@@ -55,7 +55,7 @@ func (a *Admin) Detail(w http.ResponseWriter, req *http.Request) {
 }
 
 //Presents the index page giving an overall view of the database
-func (a *Admin) Index(w http.ResponseWriter, req *http.Request) {
+func (a *Admin) index(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 
 	//ensure we have neither a collection nor an id
@@ -71,7 +71,7 @@ func (a *Admin) Index(w http.ResponseWriter, req *http.Request) {
 }
 
 //Presents a list of objects in a collection matching filtering/sorting criteria
-func (a *Admin) List(w http.ResponseWriter, req *http.Request) {
+func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 
 	//ensure we have a collection, but no id
@@ -109,7 +109,7 @@ func (a *Admin) List(w http.ResponseWriter, req *http.Request) {
 }
 
 //Presents a handler that updates an object and shows the results of the update
-func (a *Admin) Update(w http.ResponseWriter, req *http.Request) {
+func (a *Admin) update(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 
 	//ensure we have both an id and a collection
@@ -144,7 +144,7 @@ func (a *Admin) Update(w http.ResponseWriter, req *http.Request) {
 }
 
 //Presents a handler that creates an object and shows the results of the create
-func (a *Admin) Create(w http.ResponseWriter, req *http.Request) {
+func (a *Admin) create(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
 
 	//ensure we have a collection but no id

@@ -13,6 +13,7 @@ type Admin struct {
 	Session  *mgo.Session
 	Debug    bool
 	Renderer Renderer
+	Routes   map[string]string
 
 	//created on demand
 	server      *http.ServeMux
@@ -31,11 +32,11 @@ type adminHandler func(*Admin, http.ResponseWriter, *http.Request)
 
 //routes define the routes for the admin
 var routes = map[string]adminHandler{
-	"/":        (*Admin).Index,
-	"/list/":   (*Admin).List,
-	"/update/": (*Admin).Update,
-	"/create/": (*Admin).Create,
-	"/detail/": (*Admin).Detail,
+	"index":  (*Admin).index,
+	"list":   (*Admin).list,
+	"update": (*Admin).update,
+	"create": (*Admin).create,
+	"detail": (*Admin).detail,
 }
 
 //generateMux creates the internal http.ServeMux to dispatch reqeusts to the
@@ -44,9 +45,19 @@ func (a *Admin) generateMux() {
 	if a.server != nil {
 		return
 	}
+	if a.Routes == nil {
+		a.Routes = map[string]string{
+			"index":  "/",
+			"list":   "/list/",
+			"update": "/update/",
+			"create": "/create/",
+			"detail": "/detail/",
+		}
+	}
 
 	a.server = http.NewServeMux()
-	for r, fn := range routes {
+	for key, path := range a.Routes {
+		r, fn := path, routes[key]
 		a.server.Handle(r, http.StripPrefix(r, a.bind(fn)))
 	}
 }

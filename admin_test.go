@@ -14,6 +14,7 @@ type T struct {
 func (t T) GetTemplate() string {
 	return ``
 }
+func (t T) Validate() error { return nil }
 
 type T2 struct {
 	ID bson.ObjectId `bson:"_id"`
@@ -23,6 +24,7 @@ type T2 struct {
 func (t T2) GetTemplate() string {
 	return ``
 }
+func (t T2) Validate() error { return nil }
 
 type T3 struct {
 }
@@ -30,6 +32,7 @@ type T3 struct {
 func (t T3) GetTemplate() string {
 	return `{{`
 }
+func (t T3) Validate() error { return nil }
 
 func TestRegisterWorks(t *testing.T) {
 	h := &Admin{}
@@ -119,7 +122,7 @@ func TestDetailInvalid(t *testing.T) {
 
 	w = Get(t, h, "/detail/admin_test.T/ffffffffffffffffffffffff")
 	if w.Status != http.StatusNotFound {
-		t.Fatalf("Wrong return type on Update. Expected 200 got %d", w.Status)
+		t.Fatalf("Wrong return type on Update. Expected 404 got %d", w.Status)
 	}
 }
 
@@ -165,7 +168,7 @@ func TestUpdateInvalid(t *testing.T) {
 
 	w = Get(t, h, "/update/admin_test.T/ffffffffffffffffffffffff")
 	if w.Status != http.StatusNotFound {
-		t.Fatalf("Wrong return type on Update. Expected 200 got %d", w.Status)
+		t.Fatalf("Wrong return type on Update. Expected 404 got %d", w.Status)
 	}
 }
 
@@ -493,5 +496,62 @@ func TestListSortingInvalid(t *testing.T) {
 		if obj.(*T2).V != i {
 			t.Fatalf("Expected object %d. Got %d", 49-i, obj.(*T2).V)
 		}
+	}
+}
+
+func TestAdminCustomPaths(t *testing.T) {
+	r := &TestRenderer{}
+	h := &Admin{
+		Routes: map[string]string{
+			"index":  "/1/",
+			"list":   "/2/",
+			"update": "/3/",
+			"create": "/4/",
+			"detail": "/5/",
+		},
+		Session:  session,
+		Renderer: r,
+	}
+	h.Register(T{}, "admin_test.T", nil)
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/1/")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Index. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Index" {
+		t.Fatalf("Wrong Renderer called. Expected Index got %s", r.Last().Type)
+	}
+
+	w = Get(t, h, "/2/admin_test.T/")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on List. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "List" {
+		t.Fatalf("Wrong Renderer called. Expected List got %s", r.Last().Type)
+	}
+
+	w = Get(t, h, "/3/admin_test.T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Update. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Update" {
+		t.Fatalf("Wrong Renderer called. Expected Update got %s", r.Last().Type)
+	}
+
+	w = Get(t, h, "/4/admin_test.T/")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Create. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Create" {
+		t.Fatalf("Wrong Renderer called. Expected Create got %s", r.Last().Type)
+	}
+
+	w = Get(t, h, "/5/admin_test.T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Detail. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Detail" {
+		t.Fatalf("Wrong Renderer called. Expected Detail got %s", r.Last().Type)
 	}
 }

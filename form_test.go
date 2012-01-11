@@ -1,10 +1,105 @@
 package admin
 
 import (
+	"fmt"
 	"net/url"
 	"reflect"
 	"testing"
 )
+
+func BenchmarkLoadFlat(b *testing.B) {
+	var x struct {
+		X int
+		Y bool
+		Z string
+	}
+	var values = url.Values{"X": {"20"}, "Y": {"true"}, "Z": {"hello"}}
+	for i := 0; i < b.N; i++ {
+		Load(values, &x)
+	}
+}
+
+func BenchmarkLoadNested(b *testing.B) {
+	var x struct {
+		X struct {
+			Y struct {
+				Z struct {
+					A string
+				}
+			}
+		}
+	}
+	var values = url.Values{"X.Y.Z.A": {"hello"}}
+	for i := 0; i < b.N; i++ {
+		Load(values, &x)
+	}
+}
+
+func BenchmarkLoadLong(b *testing.B) {
+	var x struct {
+		X1  int
+		X2  int
+		X3  int
+		X4  int
+		X5  int
+		X6  int
+		X7  int
+		X8  int
+		X9  int
+		X10 int
+		X11 int
+		X12 int
+		X13 int
+		X14 int
+		X15 int
+		X16 int
+		X17 int
+		X18 int
+		X19 int
+		X20 int
+	}
+	var values = url.Values{}
+	for i := 1; i <= 20; i++ {
+		values.Add(fmt.Sprintf("X%d", i), "20")
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Load(values, &x)
+	}
+}
+
+func BenchmarkLoadAlloc(b *testing.B) {
+	var x struct {
+		X *******int
+	}
+	var values = url.Values{"X": {"20"}}
+	for i := 0; i < b.N; i++ {
+		Load(values, &x)
+	}
+}
+
+func BenchmarkLoadErrors(b *testing.B) {
+	var x struct {
+		X int
+		Y int
+		Z bool
+	}
+	var values = url.Values{"X": {"t"}, "Y": {"t"}, "Z": {"wtf"}}
+	for i := 0; i < b.N; i++ {
+		Load(values, &x)
+	}
+}
+
+func BenchmarkLoadCataErrors(b *testing.B) {
+	var x struct {
+		X int
+	}
+	var values = url.Values{"X.Y": {"t"}}
+	for i := 0; i < b.N; i++ {
+		Load(values, &x)
+	}
+}
 
 //compare two d types deeply.
 func compare(one, two d) bool {

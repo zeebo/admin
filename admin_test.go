@@ -14,7 +14,7 @@ type T struct {
 func (t T) GetTemplate() string {
 	return ``
 }
-func (t T) Validate() error { return nil }
+func (t T) Validate() ValidationErrors { return nil }
 
 type T2 struct {
 	ID bson.ObjectId `bson:"_id"`
@@ -24,7 +24,7 @@ type T2 struct {
 func (t T2) GetTemplate() string {
 	return ``
 }
-func (t T2) Validate() error { return nil }
+func (t T2) Validate() ValidationErrors { return nil }
 
 type T3 struct {
 }
@@ -32,7 +32,7 @@ type T3 struct {
 func (t T3) GetTemplate() string {
 	return `{{`
 }
-func (t T3) Validate() error { return nil }
+func (t T3) Validate() ValidationErrors { return nil }
 
 func TestRegisterWorks(t *testing.T) {
 	h := &Admin{}

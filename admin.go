@@ -74,11 +74,7 @@ func (a *Admin) generateIndexCache() {
 	a.index_cache = make(map[string][]string)
 	for key := range a.types {
 		pieces := strings.Split(key, ".")
-		if _, ex := a.index_cache[pieces[0]]; ex {
-			a.index_cache[pieces[0]] = append(a.index_cache[pieces[0]], pieces[1])
-		} else {
-			a.index_cache[pieces[0]] = []string{pieces[1]}
-		}
+		a.index_cache[pieces[0]] = append(a.index_cache[pieces[0]], pieces[1])
 	}
 }
 

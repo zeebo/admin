@@ -77,7 +77,7 @@ func (a *Admin) hasType(dbcoll string) (ok bool) {
 
 //Returns an interface{} boxing a new(T) where T is the type registered
 //under the collection name.
-func (a *Admin) newType(dbcoll string) interface{} {
+func (a *Admin) newType(dbcoll string) Formable {
 	if a.types == nil {
 		return nil
 	}
@@ -87,5 +87,5 @@ func (a *Admin) newType(dbcoll string) interface{} {
 		return nil
 	}
 
-	return reflect.New(t.Type).Interface()
+	return reflect.New(t.Type).Interface().(Formable)
 }

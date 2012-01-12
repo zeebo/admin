@@ -57,4 +57,4 @@ func (t T5) GetTemplate() string {
 func (t T5) Validate() ValidationErrors { return nil }
 
 func (t T5) Load(v url.Values) (LoadingErrors, error) { return nil, nil }
-func (t T5) GenerateContext() TemplateContext         { return NewTemplateContext() }
+func (t T5) GenerateValues() map[string]string        { return nil }

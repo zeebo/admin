@@ -49,8 +49,22 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	//create the values for the template
+	values, err := CreateValues(t)
+	if err != nil {
+		a.Renderer.InternalError(w, req, err)
+		return
+	}
+
 	a.Renderer.Detail(w, req, DetailContext{
 		Object: t,
+		Form: Form{
+			template: a.types[coll].Template,
+			context: TemplateContext{
+				Errors: nil,
+				Values: values,
+			},
+		},
 	})
 }
 
@@ -136,10 +150,42 @@ func (a *Admin) update(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	//attempt to update
+	var attempted, success bool
+	var errors map[string]error
+	if req.Method == "POST" {
+		attempted = true
+
+		var err error
+		errors, err = performLoading(req, t)
+		if err != nil {
+			a.Renderer.InternalError(w, req, err)
+			return
+		}
+		if errors != nil && len(errors) > 0 {
+			goto render
+		}
+
+		//TODO: save it
+		success = true
+	}
+
+render:
+
+	var form = Form{
+		template: a.types[coll].Template,
+	}
+	if ctx, err := generateContext(t, errors); err != nil {
+		a.Renderer.InternalError(w, req, err)
+		return
+	} else {
+		form.context = ctx
+	}
 
 	a.Renderer.Update(w, req, UpdateContext{
-		Object: t,
+		Object:    t,
+		Attempted: attempted,
+		Success:   success,
+		Form:      form,
 	})
 }
 
@@ -158,7 +204,82 @@ func (a *Admin) create(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	//attempt to insert
+	_, t := a.collFor(coll), a.newType(coll)
 
-	a.Renderer.Create(w, req, CreateContext{})
+	var attempted, success bool
+	var errors map[string]error
+	if req.Method == "POST" {
+		attempted = true
+
+		var err error
+		errors, err = performLoading(req, t)
+		if err != nil {
+			a.Renderer.InternalError(w, req, err)
+			return
+		}
+		if errors != nil && len(errors) > 0 {
+			goto render
+		}
+
+		//TODO: save it
+		success = true
+	}
+
+render:
+	var form = Form{
+		template: a.types[coll].Template,
+	}
+	if ctx, err := generateContext(t, errors); err != nil {
+		a.Renderer.InternalError(w, req, err)
+		return
+	} else {
+		form.context = ctx
+	}
+
+	a.Renderer.Create(w, req, CreateContext{
+		Attempted: attempted,
+		Success:   success,
+		Form:      form,
+	})
+}
+
+func performLoading(req *http.Request, t Formable) (errors map[string]error, err error) {
+	//TODO: files!
+	err = req.ParseForm()
+	if err != nil {
+		return
+	}
+
+	if l, ok := t.(Loader); ok {
+		errors, err = l.Load(req.Form)
+	} else {
+		errors, err = Load(req.Form, t)
+	}
+
+	//do we have loading errors?
+	if (errors != nil && len(errors) > 0) || err != nil {
+		return
+	}
+
+	errors = t.Validate()
+	return
+}
+
+func generateContext(t Formable, errors map[string]error) (TemplateContext, error) {
+	if l, ok := t.(Loader); ok {
+		return TemplateContext{
+			Values: l.GenerateValues(),
+			Errors: errors,
+		}, nil
+	}
+
+	values, err := CreateValues(t)
+	if err != nil {
+		return TemplateContext{}, err
+	}
+
+	return TemplateContext{
+		Values: values,
+		Errors: errors,
+	}, nil
 }

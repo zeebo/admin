@@ -46,7 +46,7 @@ type Formable interface {
 type Loader interface {
 	Formable
 	Load(url.Values) (LoadingErrors, error)
-	GenerateContext() TemplateContext
+	GenerateValues() map[string]string
 }
 
 //LoadingErrors is the type that the Load method returns for errors loading into

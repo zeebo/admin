@@ -40,8 +40,9 @@ type Renderer interface {
 //It comes loaded with the instance of the object found, and a Form that
 //represents the form for the object.
 type DetailContext struct {
-	Object interface{}
-	Form   Form
+	Object   interface{}
+	Form     Form
+	Reverser Reverser
 }
 
 //DeleteContext is the type passed to the Delete method.
@@ -56,13 +57,15 @@ type DeleteContext struct {
 	Success   bool
 	Error     error
 	Form      Form
+	Reverser  Reverser
 }
 
 //ListContext is the type passed in to the List method.
 //It comes loaded with a slice of objects selected by the List view. If no
 //objects match the passed in query, the slice will be nil.
 type ListContext struct {
-	Objects []interface{}
+	Objects  []interface{}
+	Reverser Reverser
 }
 
 //UpdateContext is the type passed in to the Update method.
@@ -74,7 +77,9 @@ type UpdateContext struct {
 	Object    interface{}
 	Attempted bool
 	Success   bool
+	Error     error
 	Form      Form
+	Reverser  Reverser
 }
 
 //CreateContext is the type passed in to the Create method.
@@ -83,13 +88,16 @@ type UpdateContext struct {
 type CreateContext struct {
 	Attempted bool
 	Success   bool
+	Error     error
 	Form      Form
+	Reverser  Reverser
 }
 
 //IndexContext is the type passed in to the Index method. It contains the
 //databases and collections being managed by the admin.
 type IndexContext struct {
-	Managed map[string][]string
+	Managed  map[string][]string
+	Reverser Reverser
 }
 
 //Key takes a database and collection and maps it to the key for urls. For

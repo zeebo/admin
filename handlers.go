@@ -62,6 +62,7 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 			template: a.types[coll].Template,
 			context:  ctx,
 		},
+		Reverser: Reverser{a},
 	})
 }
 
@@ -121,6 +122,7 @@ func (a *Admin) delete(w http.ResponseWriter, req *http.Request) {
 			template: a.types[coll].Template,
 			context:  ctx,
 		},
+		Reverser: Reverser{a},
 	})
 }
 
@@ -174,7 +176,8 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.List(w, req, ListContext{
-		Objects: items,
+		Objects:  items,
+		Reverser: Reverser{a},
 	})
 }
 
@@ -244,6 +247,7 @@ render:
 		Attempted: attempted,
 		Success:   success,
 		Form:      form,
+		Reverser:  Reverser{a},
 	})
 }
 
@@ -321,6 +325,7 @@ render:
 		Attempted: attempted,
 		Success:   success,
 		Form:      form,
+		Reverser:  Reverser{a},
 	})
 }
 

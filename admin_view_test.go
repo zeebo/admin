@@ -1,9 +1,6 @@
 package admin
 
-import (
-	"log"
-	"net/http"
-)
+import "net/http"
 
 type TestCall struct {
 	Type   string
@@ -33,7 +30,6 @@ func (r *TestRenderer) InternalError(w http.ResponseWriter, req *http.Request, e
 		Type:   "InternalError",
 		Params: err,
 	})
-	log.Println("Internal:", err)
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
@@ -41,6 +37,7 @@ func (r *TestRenderer) Unauthorized(w http.ResponseWriter, req *http.Request) {
 	r.Calls = append(r.Calls, TestCall{
 		Type: "Unauthorized",
 	})
+	w.WriteHeader(http.StatusUnauthorized)
 }
 
 func (r *TestRenderer) Detail(w http.ResponseWriter, req *http.Request, c DetailContext) {

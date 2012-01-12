@@ -9,10 +9,10 @@ import (
 
 //Admin is an http.Handler for serving up the admin pages
 type Admin struct {
-	Auth     AuthFunc          //If not nil, the AuthFunc is called on every request to determine if the request should be handled or not.
-	Session  *mgo.Session      //Session is the mongo session with the databases and collections to be handled.
+	Auth     AuthFunc          //If not nil, the AuthFunc is called on every request.
+	Session  *mgo.Session      //The mongo session for managing.
 	Renderer Renderer          //If nil, a default renderer is used to render the admin pages.
-	Routes   map[string]string //Routes lets you change the url paths for the admin. If nil, uses DefaultRoutes.
+	Routes   map[string]string //Routes lets you change the url paths. If nil, uses DefaultRoutes.
 
 	//created on demand
 	server      *http.ServeMux
@@ -20,7 +20,7 @@ type Admin struct {
 	index_cache map[string][]string
 }
 
-//DefaultRoutes is the mapping of actions to url paths by default.
+//DefaultRoutes is the mapping of actions to url paths.
 var DefaultRoutes = map[string]string{
 	"index":  "/",
 	"list":   "/list/",
@@ -33,10 +33,10 @@ var DefaultRoutes = map[string]string{
 //useful type because these get made so often
 type d map[string]interface{}
 
-//AuthFunc is a function used to determine if the request is authorized
+//AuthFunc is a function used to determine if the request is authorized.
 type AuthFunc func(*http.Request) bool
 
-//adminHandler is a type representing a handler function on an *Admin
+//adminHandler is a type representing a handler function on an *Admin.
 type adminHandler func(*Admin, http.ResponseWriter, *http.Request)
 
 //routes defines the mapping of type to function for the admin
@@ -95,13 +95,13 @@ func (a *Admin) bind(fn adminHandler) http.HandlerFunc {
 	}
 }
 
-//Returns the mgo.Collection for the specified collection
+//collFor returns the mgo.Collection for the specified database.collection.
 func (a *Admin) collFor(dbcoll string) mgo.Collection {
 	pieces := strings.Split(dbcoll, ".")
 	return a.Session.DB(pieces[0]).C(pieces[1])
 }
 
-//ServeHTTP lets *Admin conform to the http.Handler interface for use in web servers
+//ServeHTTP lets *Admin conform to the http.Handler interface for use in web servers.
 func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if a.Renderer == nil {
 		a.Renderer = defaultRenderer{}

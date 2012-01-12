@@ -8,7 +8,9 @@ import (
 )
 
 func TestRegisterWorks(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{
+		Renderer: &TestRenderer{},
+	}
 
 	h.Register(T{}, "admin_test.T", nil)
 
@@ -19,7 +21,9 @@ func TestRegisterWorks(t *testing.T) {
 }
 
 func TestRegisterDuplicate(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{
+		Renderer: &TestRenderer{},
+	}
 
 	defer func() {
 		if err := recover(); err == nil {
@@ -32,7 +36,9 @@ func TestRegisterDuplicate(t *testing.T) {
 }
 
 func TestRegisterBadTemplate(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{
+		Renderer: &TestRenderer{},
+	}
 
 	defer func() {
 		if err := recover(); err == nil {
@@ -44,7 +50,9 @@ func TestRegisterBadTemplate(t *testing.T) {
 }
 
 func TestRegisterInvalidType(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{
+		Renderer: &TestRenderer{},
+	}
 
 	defer func() {
 		if err := recover(); err == nil {
@@ -56,7 +64,9 @@ func TestRegisterInvalidType(t *testing.T) {
 }
 
 func TestRegisterCustomLoader(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{
+		Renderer: &TestRenderer{},
+	}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -73,7 +83,9 @@ func TestRegisterCustomLoader(t *testing.T) {
 }
 
 func TestNewTypeNewInstance(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{
+		Renderer: &TestRenderer{},
+	}
 
 	h.Register(T{}, "admin_test.T", nil)
 
@@ -86,7 +98,8 @@ func TestNewTypeNewInstance(t *testing.T) {
 
 func TestUnauthorized(t *testing.T) {
 	h := &Admin{
-		Auth: func(*http.Request) bool { return false },
+		Auth:     func(*http.Request) bool { return false },
+		Renderer: &TestRenderer{},
 	}
 
 	w := Get(t, h, "/")
@@ -97,7 +110,8 @@ func TestUnauthorized(t *testing.T) {
 
 func TestAuthorized(t *testing.T) {
 	h := &Admin{
-		Auth: func(*http.Request) bool { return true },
+		Auth:     func(*http.Request) bool { return true },
+		Renderer: &TestRenderer{},
 	}
 
 	w := Get(t, h, "/")
@@ -108,7 +122,8 @@ func TestAuthorized(t *testing.T) {
 
 func TestDetailInvalid(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	var w *TestResponseWriter
 
@@ -130,7 +145,8 @@ func TestDetailInvalid(t *testing.T) {
 
 func TestDeleteInvalid(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	var w *TestResponseWriter
 
@@ -152,7 +168,8 @@ func TestDeleteInvalid(t *testing.T) {
 
 func TestIndexInvalid(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	var w *TestResponseWriter
 
@@ -164,7 +181,8 @@ func TestIndexInvalid(t *testing.T) {
 
 func TestListInvalid(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	var w *TestResponseWriter
 
@@ -176,7 +194,8 @@ func TestListInvalid(t *testing.T) {
 
 func TestUpdateInvalid(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	var w *TestResponseWriter
 
@@ -198,7 +217,8 @@ func TestUpdateInvalid(t *testing.T) {
 
 func TestCreateInvalid(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	var w *TestResponseWriter
 
@@ -636,8 +656,9 @@ func TestAdminCustomPaths(t *testing.T) {
 
 func TestAdminMissingRoutes(t *testing.T) {
 	h := &Admin{
-		Routes:  map[string]string{},
-		Session: session,
+		Routes:   map[string]string{},
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 
 	defer func() {
@@ -651,7 +672,8 @@ func TestAdminMissingRoutes(t *testing.T) {
 
 func TestDetailLoaderCalled(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
 
@@ -675,7 +697,8 @@ func TestDetailLoaderCalled(t *testing.T) {
 
 func TestDeleteLoaderCalled(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
 
@@ -699,7 +722,8 @@ func TestDeleteLoaderCalled(t *testing.T) {
 
 func TestUpdateLoaderCalled(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
 
@@ -724,7 +748,8 @@ func TestUpdateLoaderCalled(t *testing.T) {
 
 func TestCreateLoaderCalled(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
 
@@ -749,7 +774,8 @@ func TestCreateLoaderCalled(t *testing.T) {
 
 func TestCreateUsesEmptyValues(t *testing.T) {
 	h := &Admin{
-		Session: session,
+		Session:  session,
+		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
 	//empty should cause no panic

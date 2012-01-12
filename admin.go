@@ -104,7 +104,9 @@ func (a *Admin) collFor(dbcoll string) mgo.Collection {
 //ServeHTTP lets *Admin conform to the http.Handler interface for use in web servers.
 func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if a.Renderer == nil {
-		a.Renderer = defaultRenderer{}
+		a.Renderer = &defaultRenderer{
+			watcher: make(chan bool, 1),
+		}
 	}
 
 	if a.Auth != nil && !a.Auth(req) {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 )
 
@@ -40,11 +41,14 @@ func NewTestResponseWriter() *TestResponseWriter {
 	}
 }
 
-func Request(h http.Handler, method string, url string, body io.Reader) (*TestResponseWriter, error) {
+func Request(h http.Handler, method string, url, bodyType string, body io.Reader) (*TestResponseWriter, error) {
 	w := NewTestResponseWriter()
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
+	}
+	if bodyType != "" {
+		r.Header.Add("Content-Type", bodyType)
 	}
 	h.ServeHTTP(w, r)
 	w.Cleanup()
@@ -52,7 +56,18 @@ func Request(h http.Handler, method string, url string, body io.Reader) (*TestRe
 }
 
 func Get(t *testing.T, h http.Handler, url string) *TestResponseWriter {
-	w, err := Request(h, "GET", url, nil)
+	w, err := Request(h, "GET", url, "", nil)
+
+	if err != nil {
+		t.Fatalf("Error requesting %q: %s", url, err)
+	}
+
+	return w
+}
+
+func Post(t *testing.T, h http.Handler, url string, data url.Values) *TestResponseWriter {
+	buf := bytes.NewBufferString(data.Encode())
+	w, err := Request(h, "POST", url, "application/x-www-form-urlencoded", buf)
 
 	if err != nil {
 		t.Fatalf("Error requesting %q: %s", url, err)

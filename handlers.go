@@ -165,12 +165,14 @@ func (a *Admin) update(w http.ResponseWriter, req *http.Request) {
 			goto render
 		}
 
-		//TODO: save it
+		if err := c.Update(bson.M{"_id": bson.ObjectIdHex(id)}, t); err != nil {
+			a.Renderer.InternalError(w, req, err)
+			return
+		}
 		success = true
 	}
 
 render:
-
 	var form = Form{
 		template: a.types[coll].Template,
 	}
@@ -204,7 +206,7 @@ func (a *Admin) create(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, t := a.collFor(coll), a.newType(coll)
+	c, t := a.collFor(coll), a.newType(coll)
 
 	var attempted, success bool
 	var errors map[string]error
@@ -221,7 +223,10 @@ func (a *Admin) create(w http.ResponseWriter, req *http.Request) {
 			goto render
 		}
 
-		//TODO: save it
+		if err := c.Insert(t); err != nil {
+			a.Renderer.InternalError(w, req, err)
+			return
+		}
 		success = true
 	}
 
@@ -243,6 +248,8 @@ render:
 	})
 }
 
+//performLoading is a helper function that loads and validates the form, returning
+//any errors from the two steps. It respects if the type is a Loader.
 func performLoading(req *http.Request, t Formable) (errors map[string]error, err error) {
 	//TODO: files!
 	err = req.ParseForm()
@@ -265,6 +272,9 @@ func performLoading(req *http.Request, t Formable) (errors map[string]error, err
 	return
 }
 
+//generateContext takes a value that should be filled in, and some errors generated
+//while filling it in and returns a TemplateContext for rendering a Form, and
+//any errors attempting to do so.
 func generateContext(t Formable, errors map[string]error) (TemplateContext, error) {
 	if l, ok := t.(Loader); ok {
 		return TemplateContext{

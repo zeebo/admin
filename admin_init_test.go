@@ -68,4 +68,7 @@ func init() {
 	if err != nil {
 		log.Fatal("Cannot use that session: %s", err)
 	}
+
+	//drop any leftovers from previous tests
+	session.DB("admin_test").C("T6").DropCollection()
 }

@@ -49,6 +49,7 @@ func ExampleAdmin() {
 			"update": "/3/",
 			"create": "/4/",
 			"detail": "/5/",
+			"delete": "/6/",
 		},
 	}
 

@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 )
 
@@ -694,6 +695,56 @@ func TestDeleteLoaderCalled(t *testing.T) {
 
 	//detail should call T5.GenerateValues()
 	Get(t, h, "/delete/admin_test.T5/4f0f0a3e79bf562daff8643f")
+}
+
+func TestUpdateLoaderCalled(t *testing.T) {
+	h := &Admin{
+		Session: session,
+	}
+	h.Register(T5{}, "admin_test.T5", nil)
+
+	defer func() {
+		if err := recover(); err != nil {
+			v, ok := err.(string)
+			if ok {
+				if v == "called l" {
+					return
+				}
+				t.Fatalf("Panic, but got %q. Expected %q.", v, "called l")
+			}
+			t.Fatalf("Strange panic: %v", err)
+		}
+		t.Fatal("No panic.")
+	}()
+
+	Post(t, h, "/update/admin_test.T5/4f0f0a3e79bf562daff8643f", url.Values{
+		"X": {"foo"},
+	})
+}
+
+func TestCreateLoaderCalled(t *testing.T) {
+	h := &Admin{
+		Session: session,
+	}
+	h.Register(T5{}, "admin_test.T5", nil)
+
+	defer func() {
+		if err := recover(); err != nil {
+			v, ok := err.(string)
+			if ok {
+				if v == "called l" {
+					return
+				}
+				t.Fatalf("Panic, but got %q. Expected %q.", v, "called l")
+			}
+			t.Fatalf("Strange panic: %v", err)
+		}
+		t.Fatal("No panic.")
+	}()
+
+	Post(t, h, "/create/admin_test.T5/", url.Values{
+		"X": {"foo"},
+	})
 }
 
 func TestCreateUsesEmptyValues(t *testing.T) {

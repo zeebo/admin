@@ -40,6 +40,8 @@ func TestAdminPostCreate(t *testing.T) {
 
 	values := params.Form.context.Values
 
+	defer session.DB("admin_test").C("T6").Remove(d{"_id": bson.ObjectIdHex(values["ID"])})
+
 	if values["X"] != "20" {
 		t.Fatalf("X: Expected %q. Got %q.", "20", values["X"])
 	}
@@ -80,6 +82,7 @@ func TestAdminPostCreate(t *testing.T) {
 		t.Fatalf("Z: Expected %v. Got %v.", true, obj.X)
 	}
 
+	//delete the item from the database
 }
 
 func TestAdminPostUpdate(t *testing.T) {
@@ -91,10 +94,13 @@ func TestAdminPostUpdate(t *testing.T) {
 	h.Register(T6{}, "admin_test.T6", nil)
 	var w *TestResponseWriter
 
+	//revert to original after
+	defer session.DB("admin_test").C("T6").Update(d{"_id": bson.ObjectIdHex("4f0ee3600888a1b6646199bd")}, d{"x": 20, "y": "foo", "z": true})
+
 	w = Post(t, h, "/update/admin_test.T6/4f0ee3600888a1b6646199bd", url.Values{
-		"X": {"20"},
+		"X": {"30"},
 		"Y": {"foob"},
-		"Z": {"true"},
+		"Z": {"false"},
 	})
 	if w.Status != http.StatusOK {
 		t.Fatalf("Wrong return type on create. expected 200 got %d", w.Status)
@@ -120,14 +126,14 @@ func TestAdminPostUpdate(t *testing.T) {
 
 	//compare values in the object to known values
 	obj := r.Last().Params.(DetailContext).Object.(*T6)
-	if obj.X != 20 {
-		t.Fatalf("X: Expected %d. Got %d.", 20, obj.X)
+	if obj.X != 30 {
+		t.Fatalf("X: Expected %d. Got %d.", 30, obj.X)
 	}
 	if obj.Y != "foob" {
-		t.Fatalf("Y: Expected %s. Got %s.", "foo", obj.X)
+		t.Fatalf("Y: Expected %s. Got %s.", "foob", obj.X)
 	}
-	if obj.Z != true {
-		t.Fatalf("Z: Expected %v. Got %v.", true, obj.X)
+	if obj.Z != false {
+		t.Fatalf("Z: Expected %v. Got %v.", false, obj.X)
 	}
 }
 

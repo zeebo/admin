@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"path"
 	"reflect"
 )
 
@@ -42,7 +43,7 @@ func (r Reverser) CreateObj(thing interface{}) string {
 	return r.Create(r.collFor(thing))
 }
 func (r Reverser) Create(coll string) string {
-	return ""
+	return path.Join(r.admin.Prefix, r.admin.Routes["create"], coll)
 }
 
 func (r Reverser) DetailObj(thing interface{}) string {
@@ -50,18 +51,18 @@ func (r Reverser) DetailObj(thing interface{}) string {
 	return r.Detail(coll, id)
 }
 func (r Reverser) Detail(coll string, id string) string {
-	return ""
+	return path.Join(r.admin.Prefix, r.admin.Routes["detail"], coll, id)
 }
 
 func (r Reverser) ListObj(thing interface{}) string {
 	return r.List(r.collFor(thing))
 }
 func (r Reverser) List(coll string) string {
-	return ""
+	return path.Join(r.admin.Prefix, r.admin.Routes["list"], coll)
 }
 
 func (r Reverser) Index() string {
-	return ""
+	return path.Join(r.admin.Prefix, r.admin.Routes["index"])
 }
 
 func (r Reverser) DeleteObj(thing interface{}) string {
@@ -69,7 +70,7 @@ func (r Reverser) DeleteObj(thing interface{}) string {
 	return r.Delete(coll, id)
 }
 func (r Reverser) Delete(coll string, id string) string {
-	return ""
+	return path.Join(r.admin.Prefix, r.admin.Routes["delete"], coll, id)
 }
 
 func (r Reverser) UpdateObj(thing interface{}) string {
@@ -77,5 +78,5 @@ func (r Reverser) UpdateObj(thing interface{}) string {
 	return r.Update(coll, id)
 }
 func (r Reverser) Update(coll string, id string) string {
-	return ""
+	return path.Join(r.admin.Prefix, r.admin.Routes["update"], coll, id)
 }

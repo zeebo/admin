@@ -12,6 +12,7 @@ import (
 var (
 	load       = flag.Bool("load", false, "Run mongoimport on the json file for the database")
 	export     = flag.Bool("export", false, "Export json files")
+	exit       = flag.Bool("exit", false, "Exit after loading")
 	sessionurl = flag.String("s", "localhost", "Mongo url for the test database")
 	session    *mgo.Session
 )
@@ -36,7 +37,7 @@ func export_collection(collection string) error {
 func init() {
 	flag.Parse()
 
-	types := []string{"T", "T2", "T6"}
+	types := []string{"T", "T2", "T5", "T6"}
 
 	//Import: mongoimport --drop -d admin_test -c T admin_test.json
 	//Export: mongoexport -d admin_test -c T > admin_test.json
@@ -60,6 +61,9 @@ func init() {
 			if err := load_collection(t); err != nil {
 				log.Fatalf("Error loading %s: %s", t, err)
 			}
+		}
+		if *exit {
+			log.Fatal("Data imported sucessfully.")
 		}
 	} else {
 		//be sure to load T6 no matter what

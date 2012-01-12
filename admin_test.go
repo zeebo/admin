@@ -647,3 +647,60 @@ func TestAdminMissingRoutes(t *testing.T) {
 
 	Get(t, h, "/foo")
 }
+
+func TestDetailLoaderCalled(t *testing.T) {
+	h := &Admin{
+		Session: session,
+	}
+	h.Register(T5{}, "admin_test.T5", nil)
+
+	defer func() {
+		if err := recover(); err != nil {
+			v, ok := err.(string)
+			if ok {
+				if v == "called gv" {
+					return
+				}
+				t.Fatalf("Panic, but got %q. Expected %q.", v, "called gv")
+			}
+			t.Fatalf("Strange panic: %v", err)
+		}
+		t.Fatal("No panic.")
+	}()
+
+	//detail should call T5.GenerateValues()
+	Get(t, h, "/detail/admin_test.T5/4f0f0a3e79bf562daff8643f")
+}
+
+func TestDeleteLoaderCalled(t *testing.T) {
+	h := &Admin{
+		Session: session,
+	}
+	h.Register(T5{}, "admin_test.T5", nil)
+
+	defer func() {
+		if err := recover(); err != nil {
+			v, ok := err.(string)
+			if ok {
+				if v == "called gv" {
+					return
+				}
+				t.Fatalf("Panic, but got %q. Expected %q.", v, "called gv")
+			}
+			t.Fatalf("Strange panic: %v", err)
+		}
+		t.Fatal("No panic.")
+	}()
+
+	//detail should call T5.GenerateValues()
+	Get(t, h, "/delete/admin_test.T5/4f0f0a3e79bf562daff8643f")
+}
+
+func TestCreateUsesEmptyValues(t *testing.T) {
+	h := &Admin{
+		Session: session,
+	}
+	h.Register(T5{}, "admin_test.T5", nil)
+	//empty should cause no panic
+	Get(t, h, "/create/admin_test.T5/")
+}

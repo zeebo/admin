@@ -298,11 +298,23 @@ render:
 	var form = Form{
 		template: a.types[coll].Template,
 	}
-	if ctx, err := generateContext(t, errors); err != nil {
-		a.Renderer.InternalError(w, req, err)
-		return
+	if attempted {
+		if ctx, err := generateContext(t, errors); err != nil {
+			a.Renderer.InternalError(w, req, err)
+			return
+		} else {
+			form.context = ctx
+		}
 	} else {
-		form.context = ctx
+		val, err := CreateEmptyValues(t)
+		if err != nil {
+			a.Renderer.InternalError(w, req, err)
+		}
+
+		form.context = TemplateContext{
+			Values: val,
+			Errors: errors,
+		}
 	}
 
 	a.Renderer.Create(w, req, CreateContext{

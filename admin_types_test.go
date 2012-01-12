@@ -44,8 +44,8 @@ type T5 struct {
 
 func (t T5) GetTemplate() string                      { return `` }
 func (t T5) Validate() ValidationErrors               { return nil }
-func (t T5) Load(v url.Values) (LoadingErrors, error) { return nil, nil }
-func (t T5) GenerateValues() map[string]string        { return nil }
+func (t T5) Load(v url.Values) (LoadingErrors, error) { panic("called l"); return nil, nil }
+func (t T5) GenerateValues() map[string]string        { panic("called gv"); return nil }
 
 //T6 is a nontrivial type for testing CRUD
 type T6 struct {

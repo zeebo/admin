@@ -123,7 +123,29 @@ func TestDetailInvalid(t *testing.T) {
 
 	w = Get(t, h, "/detail/admin_test.T/ffffffffffffffffffffffff")
 	if w.Status != http.StatusNotFound {
-		t.Fatalf("Wrong return type on Update. Expected 404 got %d", w.Status)
+		t.Fatalf("Wrong return type on Delete. Expected 404 got %d", w.Status)
+	}
+}
+
+func TestDeleteInvalid(t *testing.T) {
+	h := &Admin{
+		Session: session,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/delete/")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Delete did not 404 without collection. Got %d", w.Status)
+	}
+
+	w = Get(t, h, "/delete/admin_test.T/")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Delete did not 404 without id. Got %d", w.Status)
+	}
+
+	w = Get(t, h, "/delete/admin_test.T/ffffffffffffffffffffffff")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Wrong return type on Delete. Expected 404 got %d", w.Status)
 	}
 }
 
@@ -294,6 +316,34 @@ func TestDetailCorrectRender(t *testing.T) {
 	}
 }
 
+func TestDeleteCorrectRender(t *testing.T) {
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  session,
+		Renderer: r,
+	}
+	h.Register(T{}, "admin_test.T", nil)
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/delete/admin_test.T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Delete. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Delete" {
+		t.Fatalf("Wrong Renderer called. Expected Delete got %s", r.Last().Type)
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			t.Fatalf("Error checking for correct object. %s", err)
+		}
+	}()
+
+	if id := r.Last().Params.(DeleteContext).Object.(*T).ID.Hex(); id != "4f07c34779bf562daff8640c" {
+		t.Fatalf("Delete returned the wrong object. Expected 4f07c34779bf562daff8640c got %s", id)
+	}
+}
+
 func TestRegisterNoDatabase(t *testing.T) {
 	h := &Admin{}
 	defer func() {
@@ -330,6 +380,23 @@ func TestDetailUnknownCollection(t *testing.T) {
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/detail/unknown.T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Expected 404 got %d", w.Status)
+	}
+	if r.Last().Type != "NotFound" {
+		t.Fatalf("Wrong Renderer called. Expected NotFound got %s", r.Last().Type)
+	}
+}
+
+func TestDeleteUnknownCollection(t *testing.T) {
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  session,
+		Renderer: r,
+	}
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/delete/unknown.T/4f07c34779bf562daff8640c")
 	if w.Status != http.StatusNotFound {
 		t.Fatalf("Expected 404 got %d", w.Status)
 	}
@@ -509,6 +576,7 @@ func TestAdminCustomPaths(t *testing.T) {
 			"update": "/3/",
 			"create": "/4/",
 			"detail": "/5/",
+			"delete": "/6/",
 		},
 		Session:  session,
 		Renderer: r,
@@ -555,4 +623,27 @@ func TestAdminCustomPaths(t *testing.T) {
 	if r.Last().Type != "Detail" {
 		t.Fatalf("Wrong Renderer called. Expected Detail got %s", r.Last().Type)
 	}
+
+	w = Get(t, h, "/6/admin_test.T/4f07c34779bf562daff8640c")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on Delete. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Delete" {
+		t.Fatalf("Wrong Renderer called. Expected Delete got %s", r.Last().Type)
+	}
+}
+
+func TestAdminMissingRoutes(t *testing.T) {
+	h := &Admin{
+		Routes:  map[string]string{},
+		Session: session,
+	}
+
+	defer func() {
+		if err := recover(); err == nil {
+			t.Fatal("Expected error.")
+		}
+	}()
+
+	Get(t, h, "/foo")
 }

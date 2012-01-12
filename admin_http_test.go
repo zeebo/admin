@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"testing"
 )
 
 type TestResponseWriter struct {
@@ -41,6 +40,10 @@ func NewTestResponseWriter() *TestResponseWriter {
 	}
 }
 
+type fatalf interface {
+	Fatalf(string, ...interface{})
+}
+
 func Request(h http.Handler, method string, url, bodyType string, body io.Reader) (*TestResponseWriter, error) {
 	w := NewTestResponseWriter()
 	r, err := http.NewRequest(method, url, body)
@@ -55,7 +58,7 @@ func Request(h http.Handler, method string, url, bodyType string, body io.Reader
 	return w, nil
 }
 
-func Get(t *testing.T, h http.Handler, url string) *TestResponseWriter {
+func Get(t fatalf, h http.Handler, url string) *TestResponseWriter {
 	w, err := Request(h, "GET", url, "", nil)
 
 	if err != nil {
@@ -65,7 +68,7 @@ func Get(t *testing.T, h http.Handler, url string) *TestResponseWriter {
 	return w
 }
 
-func Post(t *testing.T, h http.Handler, url string, data url.Values) *TestResponseWriter {
+func Post(t fatalf, h http.Handler, url string, data url.Values) *TestResponseWriter {
 	buf := bytes.NewBufferString(data.Encode())
 	w, err := Request(h, "POST", url, "application/x-www-form-urlencoded", buf)
 

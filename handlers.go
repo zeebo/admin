@@ -50,7 +50,7 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 	}
 
 	//create the values for the template
-	values, err := CreateValues(t)
+	ctx, err := generateContext(t, nil)
 	if err != nil {
 		a.Renderer.InternalError(w, req, err)
 		return
@@ -60,10 +60,66 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 		Object: t,
 		Form: Form{
 			template: a.types[coll].Template,
-			context: TemplateContext{
-				Errors: nil,
-				Values: values,
-			},
+			context:  ctx,
+		},
+	})
+}
+
+//Presents the delete view for an object in a collection
+func (a *Admin) delete(w http.ResponseWriter, req *http.Request) {
+	coll, id := parseRequest(req.URL.Path)
+
+	//ensure we have both a collection and an id
+	if coll == "" || id == "" {
+		a.Renderer.NotFound(w, req)
+		return
+	}
+
+	//make sure we know about the requested collection
+	if !a.hasType(coll) {
+		a.Renderer.NotFound(w, req)
+		return
+	}
+
+	c, t := a.collFor(coll), a.newType(coll)
+
+	//load into T
+	if err := c.Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(t); err != nil {
+		if err.Error() == "Document not found" {
+			a.Renderer.NotFound(w, req)
+			return
+		}
+		a.Renderer.InternalError(w, req, err)
+		return
+	}
+
+	//check if they're sure they want to delete
+	req.ParseForm()
+
+	var attempted, success bool
+	var err error
+
+	if req.Form.Get("_sure") == "yes" {
+		attempted = true
+
+		err = c.Remove(bson.M{"_id": bson.ObjectIdHex(id)})
+		success = err == nil
+	}
+
+	ctx, err := generateContext(t, nil)
+	if err != nil {
+		a.Renderer.InternalError(w, req, err)
+		return
+	}
+
+	a.Renderer.Delete(w, req, DeleteContext{
+		Object:    t,
+		Attempted: attempted,
+		Success:   success,
+		Error:     err,
+		Form: Form{
+			template: a.types[coll].Template,
+			context:  ctx,
 		},
 	})
 }
@@ -223,10 +279,18 @@ func (a *Admin) create(w http.ResponseWriter, req *http.Request) {
 			goto render
 		}
 
-		if err := c.Insert(t); err != nil {
+		id, err := c.Upsert(d{"_id": ""}, t)
+		if err != nil {
 			a.Renderer.InternalError(w, req, err)
 			return
 		}
+
+		//lets grab the thing back out from the database
+		if err = c.Find(bson.M{"_id": id}).One(t); err != nil {
+			a.Renderer.InternalError(w, req, err)
+			return
+		}
+
 		success = true
 	}
 

@@ -27,6 +27,7 @@ var DefaultRoutes = map[string]string{
 	"update": "/update/",
 	"create": "/create/",
 	"detail": "/detail/",
+	"delete": "/delete/",
 }
 
 //useful type because these get made so often
@@ -45,6 +46,7 @@ var routes = map[string]adminHandler{
 	"update": (*Admin).update,
 	"create": (*Admin).create,
 	"detail": (*Admin).detail,
+	"delete": (*Admin).delete,
 }
 
 //generateMux creates the internal http.ServeMux to dispatch reqeusts to the
@@ -55,6 +57,13 @@ func (a *Admin) generateMux() {
 	}
 	if a.Routes == nil {
 		a.Routes = DefaultRoutes
+	}
+
+	required := []string{"index", "list", "update", "create", "detail", "delete"}
+	for _, r := range required {
+		if _, ex := a.Routes[r]; !ex {
+			panic("Route missing: " + r)
+		}
 	}
 
 	a.server = http.NewServeMux()

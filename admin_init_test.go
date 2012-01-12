@@ -36,7 +36,7 @@ func export_collection(collection string) error {
 func init() {
 	flag.Parse()
 
-	types := []string{"T", "T2"}
+	types := []string{"T", "T2", "T6"}
 
 	//Import: mongoimport --drop -d admin_test -c T admin_test.json
 	//Export: mongoexport -d admin_test -c T > admin_test.json
@@ -61,6 +61,11 @@ func init() {
 				log.Fatalf("Error loading %s: %s", t, err)
 			}
 		}
+	} else {
+		//be sure to load T6 no matter what
+		if err := load_collection("T6"); err != nil {
+			log.Fatalf("Error loading %s: %s", "T6", err)
+		}
 	}
 
 	var err error
@@ -69,6 +74,4 @@ func init() {
 		log.Fatal("Cannot use that session: %s", err)
 	}
 
-	//drop any leftovers from previous tests
-	session.DB("admin_test").C("T6").DropCollection()
 }

@@ -28,6 +28,7 @@ type Renderer interface {
 	//of an error in processing the form. Relevant details will be in the 
 	//passed in context.
 	Detail(http.ResponseWriter, *http.Request, DetailContext)
+	Delete(http.ResponseWriter, *http.Request, DeleteContext)
 	Index(http.ResponseWriter, *http.Request, IndexContext)
 	List(http.ResponseWriter, *http.Request, ListContext)
 	Update(http.ResponseWriter, *http.Request, UpdateContext)
@@ -40,6 +41,20 @@ type Renderer interface {
 type DetailContext struct {
 	Object interface{}
 	Form   Form
+}
+
+//DeleteContext is the type passed to the Delete method.
+//It comes loaded with an instance of the object to be deleted, and a form
+//for rendering the object. The renderer should use the Form.Values method to
+//render a readonly display, with a button that adds _sure=yes as a parameter
+//to the same page. Error is the error in attempting to delete the object, if
+//one exists.
+type DeleteContext struct {
+	Object    interface{}
+	Attempted bool
+	Success   bool
+	Error     error
+	Form      Form
 }
 
 //ListContext is the type passed in to the List method.
@@ -143,6 +158,12 @@ func (f *Form) Execute(w io.Writer) error {
 	return f.template.Execute(w, f.context)
 }
 
+//Values returns the values map for the Form. This is useful for the Delete
+//renderer to display readonly values for the form.
+func (f *Form) Values() map[string]string {
+	return f.context.Values
+}
+
 //defaultRenderer conforms to the Renderer interface and uses some magic templates
 //to create a pretty default interface.
 type defaultRenderer struct{}
@@ -165,6 +186,10 @@ func (r defaultRenderer) Unauthorized(w http.ResponseWriter, req *http.Request) 
 
 //Detail presents the detail view of an object.
 func (r defaultRenderer) Detail(w http.ResponseWriter, req *http.Request, c DetailContext) {
+
+}
+
+func (r defaultRenderer) Delete(w http.ResponseWriter, req *http.Request, c DeleteContext) {
 
 }
 

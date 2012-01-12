@@ -50,6 +50,13 @@ func (r *TestRenderer) Detail(w http.ResponseWriter, req *http.Request, c Detail
 	})
 }
 
+func (r *TestRenderer) Delete(w http.ResponseWriter, req *http.Request, c DeleteContext) {
+	r.Calls = append(r.Calls, TestCall{
+		Type:   "Delete",
+		Params: c,
+	})
+}
+
 func (r *TestRenderer) Index(w http.ResponseWriter, req *http.Request, c IndexContext) {
 	r.Calls = append(r.Calls, TestCall{
 		Type:   "Index",

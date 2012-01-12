@@ -101,6 +101,12 @@ func indirectType(val reflect.Type) reflect.Type {
 	return val
 }
 
+//hexable for using the Hex() method instead of the String() method for
+//CreateValues. Useful for bson.ObjectID values.
+type hexable interface {
+	Hex() string
+}
+
 //CreateValues is used to create a map for insertion into a TemplateContext.
 //It calls fmt.Sprintf on the values which hopefully wont mangle anything.
 func CreateValues(obj interface{}) (map[string]string, error) {
@@ -124,7 +130,12 @@ func CreateValues(obj interface{}) (map[string]string, error) {
 
 		//handle the basic types
 		if field.Kind() != reflect.Struct {
-			res[name] = fmt.Sprint(field.Interface())
+			switch f := field.Interface().(type) {
+			case hexable:
+				res[name] = f.Hex()
+			default:
+				res[name] = fmt.Sprint(f)
+			}
 			continue
 		}
 

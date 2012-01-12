@@ -53,7 +53,7 @@ func ExampleAdmin() {
 	}
 
 	a.Register(T{}, "database.collection", &Options{
-		Columns: []string{"first", "second", "fifth"},
+		Columns: []string{"First", "Second", "Fifth"},
 	})
 
 	http.Handle("/admin/", http.StripPrefix("/admin/", a))

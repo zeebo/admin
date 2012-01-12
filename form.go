@@ -41,8 +41,8 @@ type Formable interface {
 //loading such as an incorrect schema sent to your struct.
 //
 //GenerateContext returns the TemplateContext that will be passed in to the
-//template returned by GetTemplate(). This cannot be handled by the admin
-//if you are using types such as slices or maps in your data structure.
+//template returned by GetTemplate(). Structs cannot be handled by the admin
+//when they contain types such as slices or maps in your data structure.
 type Loader interface {
 	Formable
 	Load(url.Values) (LoadingErrors, error)
@@ -50,8 +50,9 @@ type Loader interface {
 }
 
 //LoadingErrors is the type that the Load method returns for errors loading into
-//a struct. For example trying to put "-1" into a uint or other things. Keys
-//must be a dot seperated path to the value in the struct. For example
+//a struct. For example trying to put "-1" into a uint or other things of that
+//nature. Keys ust be a dot seperated path to the value in the struct. For
+//example
 //
 //	type T struct {
 //		A string
@@ -381,8 +382,16 @@ func unflatten(val url.Values, prefix string) d {
 
 //Load writes the values from a form into the specified object. Types handled
 //are some basic types, types that are identical to those basic types, and 
-//structs consisting of the former. If the object is a Loader loading is passed
-//off to its Load method. If the types 
+//structs consisting of the former. The basic types handled by Load are
+//
+//	int, int8, int16, int32, int64
+//	uint, uint8, uint16, uint32, uint64
+//	float32, float64
+//	bool
+//
+//If the type is a pointer to any of the handled types, values are allocated
+//up until a basic type is reached. If the object is a Loader loading is passed
+//off to its Load method.
 func Load(form url.Values, obj interface{}) (LoadingErrors, error) {
 	if l, ok := obj.(Loader); ok {
 		return l.Load(form)

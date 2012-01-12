@@ -101,61 +101,42 @@ func BenchmarkLoadCataErrors(b *testing.B) {
 	}
 }
 
-//compare two d types deeply.
-func compare(one, two d) bool {
-	if len(one) != len(two) {
-		return false
+func BenchmarkCreateValues(b *testing.B) {
+	type flat struct {
+		X string
+		Y int
+		Z bool
 	}
-
-	for k, v1 := range one {
-		v2, ex := two[k]
-		if !ex {
-			return false
+	type nested struct {
+		X string
+		Y struct {
+			Z int
 		}
-
-		//check strings
-		if v1s, ok := v1.(string); ok {
-			if v2s, ok := v2.(string); ok {
-				if v1s == v2s {
-					continue
-				}
-			}
-		}
-
-		//check dicts
-		if v1d, ok := v1.(d); ok {
-			if v2d, ok := v2.(d); ok {
-				if compare(v1d, v2d) {
-					continue
-				}
-			}
-		}
-
-		return false
+		Q flat
 	}
-	return true
+	var x = nested{"food", struct{ Z int }{-8000}, flat{"doof", 20, false}}
+	for i := 0; i < b.N; i++ {
+		CreateValues(x)
+	}
 }
 
-func compareErrs(one LoadingErrors, two []string) bool {
-	if len(one) != len(two) {
-		return false
+func BenchmarkCreateEmptyValues(b *testing.B) {
+	type flat struct {
+		X **string
+		Y *int
+		Z ***bool
 	}
-
-	for k := range one {
-		//search for k in two
-		var found bool
-		for _, v := range two {
-			if v == k {
-				found = true
-				break
-			}
+	type nested struct {
+		X *string
+		Y **struct {
+			Z *int
 		}
-
-		if !found {
-			return false
-		}
+		Q ***flat
 	}
-	return true
+	var x nested
+	for i := 0; i < b.N; i++ {
+		CreateEmptyValues(x)
+	}
 }
 
 func TestUnflatten(t *testing.T) {
@@ -247,6 +228,21 @@ func TestLoadPointer(t *testing.T) {
 	}
 }
 
+func TestLoadPointerEmpty(t *testing.T) {
+	var x struct {
+		X *string
+	}
+
+	_, err := Load(url.Values{"X": {""}}, &x)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if *x.X != "" {
+		t.Fatalf("Expected %q. Got %q", "hello", *x.X)
+	}
+}
+
 func TestErrors(t *testing.T) {
 	//save some typing (punny!)
 	type F []string
@@ -290,6 +286,56 @@ func TestLoadInvalidSchema(t *testing.T) {
 
 	if !compareErrs(lerrs, []string{}) {
 		t.Fatalf("Expected no LoadingErrors. Got %v", lerrs)
+	}
+}
+
+func TestLoadInvalidTypes(t *testing.T) {
+	var (
+		x1 = struct{ X func() }{}
+		x2 = struct{ X []string }{}
+		x3 = struct{ X interface{} }{}
+		x4 = struct{ X map[string]string }{}
+		x5 = struct{ X [5]string }{}
+		x6 = struct{ X chan string }{}
+		x7 = struct{ X uintptr }{}
+		x8 = struct{ X complex64 }{}
+		x9 = struct{ X complex128 }{}
+	)
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x1); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x1)
+	}
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x2); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x2)
+	}
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x3); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x3)
+	}
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x4); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x4)
+	}
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x5); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x5)
+	}
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x6); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x6)
+	}
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x7); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x7)
+	}
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x8); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x8)
+	}
+
+	if _, err := Load(url.Values{"X": {"data"}}, &x9); err == nil {
+		t.Fatalf("Error. Allowed loading into a %T", x9)
 	}
 }
 
@@ -408,4 +454,219 @@ func TestLoadIntoFailures(t *testing.T) {
 	if err := loadInto(reflect.ValueOf(x), "hello"); err == nil {
 		t.Fatal("expected loadInto to fail on type that cannot be set")
 	}
+}
+
+func TestCreateValuesValid(t *testing.T) {
+	type flat struct {
+		X string
+		Y int
+		Z bool
+	}
+	type nested struct {
+		X string
+		Y struct {
+			Z int
+		}
+		Q flat
+	}
+	type F map[string]string
+	table := []struct {
+		data     interface{}
+		expected F
+	}{
+		{flat{"foo", 2, true}, F{"X": "foo", "Y": "2", "Z": "true"}},
+		{flat{"foob", -2, false}, F{"X": "foob", "Y": "-2", "Z": "false"}},
+		{nested{"foo", struct{ Z int }{8}, flat{"foob", 2, true}}, F{"X": "foo", "Y.Z": "8", "Q.X": "foob", "Q.Y": "2", "Q.Z": "true"}},
+		{nested{"food", struct{ Z int }{-8000}, flat{"doof", 20, false}}, F{"X": "food", "Y.Z": "-8000", "Q.X": "doof", "Q.Y": "20", "Q.Z": "false"}},
+	}
+
+	for _, c := range table {
+		ret, err := CreateValues(c.data)
+		if err != nil {
+			t.Fatalf("Error processing: %s\n%s", err, c.data)
+		}
+
+		if !compareString(ret, c.expected) {
+			t.Fatalf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
+		}
+	}
+}
+
+func TestCreateValuesInValid(t *testing.T) {
+	var x struct {
+		X *int
+	}
+
+	_, err := CreateValues(x)
+	if err == nil {
+		t.Fatal("Expected error for nil pointer")
+	}
+}
+
+func TestCreateEmptyValuesValid(t *testing.T) {
+	type F map[string]string
+	table := []struct {
+		data     interface{}
+		expected F
+	}{
+		{struct {
+			X *int
+			Y **int
+			Z **bool
+		}{}, F{"X": "", "Y": "", "Z": ""}},
+		{struct {
+			X *int
+			Y int
+			Z *******int
+		}{}, F{"X": "", "Y": "", "Z": ""}},
+		{struct {
+			X **struct {
+				Y *int
+				Z string
+			}
+		}{}, F{"X.Y": "", "X.Z": ""}},
+	}
+
+	for _, c := range table {
+		ret, err := CreateEmptyValues(c.data)
+		if err != nil {
+			t.Fatalf("Error processing: %s\n%s", err, c.data)
+		}
+
+		if !compareString(ret, c.expected) {
+			t.Fatalf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
+		}
+	}
+}
+
+func TestCreateEmptyValuesInvalidTypes(t *testing.T) {
+	var (
+		x1 = struct{ X func() }{}
+		x2 = struct{ X []string }{}
+		x3 = struct{ X interface{} }{}
+		x4 = struct{ X map[string]string }{}
+		x5 = struct{ X [5]string }{}
+		x6 = struct{ X chan string }{}
+		x7 = struct{ X uintptr }{}
+		x8 = struct{ X complex64 }{}
+		x9 = struct{ X complex128 }{}
+	)
+
+	if _, err := CreateEmptyValues(x1); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x1)
+	}
+
+	if _, err := CreateEmptyValues(x2); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x2)
+	}
+
+	if _, err := CreateEmptyValues(x3); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x3)
+	}
+
+	if _, err := CreateEmptyValues(x4); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x4)
+	}
+
+	if _, err := CreateEmptyValues(x5); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x5)
+	}
+
+	if _, err := CreateEmptyValues(x6); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x6)
+	}
+
+	if _, err := CreateEmptyValues(x7); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x7)
+	}
+
+	if _, err := CreateEmptyValues(x8); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x8)
+	}
+
+	if _, err := CreateEmptyValues(x9); err == nil {
+		t.Fatalf("Error. Creating an empty value with a %T", x9)
+	}
+}
+
+func TestCreateEmptyValuesInvalid(t *testing.T) {
+	r, err := CreateEmptyValues(struct {
+		X []string
+	}{})
+	if err == nil {
+		t.Fatalf("Expected an error because slices are unsupported. Got a %s", r)
+	}
+}
+
+//compare two d types deeply.
+func compare(one, two d) bool {
+	if len(one) != len(two) {
+		return false
+	}
+
+	for k, v1 := range one {
+		v2, ex := two[k]
+		if !ex {
+			return false
+		}
+
+		//check strings
+		if v1s, ok := v1.(string); ok {
+			if v2s, ok := v2.(string); ok {
+				if v1s == v2s {
+					continue
+				}
+			}
+		}
+
+		//check dicts
+		if v1d, ok := v1.(d); ok {
+			if v2d, ok := v2.(d); ok {
+				if compare(v1d, v2d) {
+					continue
+				}
+			}
+		}
+
+		return false
+	}
+	return true
+}
+
+func compareString(one, two map[string]string) bool {
+	if len(one) != len(two) {
+		return false
+	}
+	for k, v1 := range one {
+		v2, ex := two[k]
+		if !ex {
+			return false
+		}
+		if v1 != v2 {
+			return false
+		}
+	}
+	return true
+}
+
+func compareErrs(one LoadingErrors, two []string) bool {
+	if len(one) != len(two) {
+		return false
+	}
+
+	for k := range one {
+		//search for k in two
+		var found bool
+		for _, v := range two {
+			if v == k {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return false
+		}
+	}
+	return true
 }

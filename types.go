@@ -24,7 +24,8 @@ type collectionInfo struct {
 //Registers the type/collection pair in the admin. Panics if two types are mapped
 //to the same collection. Dbcolls are dot separated database/collection specifiers.
 //Panics if no database is specified. Panics if the template returned by the Formable
-//has any compilation errors.
+//has any compilation errors. Panics if the type cannot be handled by the loading
+//engine (must be composed of valid types)
 func (a *Admin) Register(typ Formable, dbcoll string, opt *Options) {
 	if a.types == nil {
 		a.types = make(map[string]collectionInfo)
@@ -38,6 +39,15 @@ func (a *Admin) Register(typ Formable, dbcoll string, opt *Options) {
 	}
 	//compile the template
 	templ := template.Must(template.New("form").Parse(typ.GetTemplate()))
+
+	//ensure we can create an empty templatecontext for it (no invalid types)
+	if _, err := CreateEmptyValues(typ); err != nil {
+		//we have a type that cant be handled by the loading enging. But is it a
+		//loader?
+		if _, ok := typ.(Loader); !ok {
+			panic(err)
+		}
+	}
 
 	a.types[dbcoll] = collectionInfo{opt, t, templ}
 }

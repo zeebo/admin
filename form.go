@@ -39,8 +39,14 @@ type Formable interface {
 //for B, if it is a Loader, to return LoadingErrors with the keys "C" and "D".
 //The second paramater is used to indicate errors that don't have to do with
 //loading such as an incorrect schema sent to your struct.
+//
+//GenerateContext returns the TemplateContext that will be passed in to the
+//template returned by GetTemplate(). This cannot be handled by the admin
+//if you are using types such as slices or maps in your data structure.
 type Loader interface {
+	Formable
 	Load(url.Values) (LoadingErrors, error)
+	GenerateContext() TemplateContext
 }
 
 //LoadingErrors is the type that the Load method returns for errors loading into
@@ -110,6 +116,139 @@ func (t *TemplateContext) Value(field string) string {
 		return v
 	}
 	return ""
+}
+
+//indirect walks up interface/pointer chains until it gets to an actual concrete
+//type. If the pointer is nil, we can't walk up so we get an error.
+func indirect(val reflect.Value) (v reflect.Value, e error) {
+	//recover any errors from reflect
+	defer func() {
+		if i := recover(); i != nil {
+			if err, ok := i.(error); ok {
+				e = err
+			}
+			panic(i)
+		}
+	}()
+
+	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
+		val = val.Elem()
+	}
+
+	if !val.IsValid() {
+		return val, errors.New("Invalid value after indirection")
+	}
+
+	return val, nil
+}
+
+func indirectType(val reflect.Type) reflect.Type {
+	for val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	return val
+}
+
+//CreateValues is used to create a map for insertion into a TemplateContext.
+//It calls fmt.Sprintf on the values which hopefully wont mangle anything.
+func CreateValues(obj interface{}) (map[string]string, error) {
+	val, err := indirect(reflect.ValueOf(obj))
+	if err != nil {
+		return nil, err
+	}
+	typ := val.Type()
+
+	res := map[string]string{}
+	for i := 0; i < val.NumField(); i++ {
+		field, err := indirect(val.Field(i))
+		if err != nil {
+			return nil, err
+		}
+		name := typ.Field(i).Name
+
+		if !field.CanInterface() {
+			return nil, errors.New(fmt.Sprintf("Can't get the value in %s", name))
+		}
+
+		//handle the basic types
+		if field.Kind() != reflect.Struct {
+			res[name] = fmt.Sprint(field.Interface())
+			continue
+		}
+
+		//handle the struct type
+		data, err := CreateValues(field.Interface())
+		if err != nil {
+			return nil, err
+		}
+
+		//copy data into local map
+		for k, v := range data {
+			res[fmt.Sprintf("%s.%s", name, k)] = v
+		}
+	}
+
+	return res, nil
+}
+
+//CreateEmptyValues creates a map for insertion into a TemplateContext using
+//the empty string for every value. This is useful for generating a template
+//context on a type that has not been loaded into, e.g. the create page.
+func CreateEmptyValues(obj interface{}) (map[string]string, error) {
+	typ := indirectType(reflect.TypeOf(obj))
+	return createEmptyValuesType(typ)
+}
+
+//createEmptyValuesType is a helper for createEmptyValues. It helps the client
+//not depend on the reflect package.
+func createEmptyValuesType(typ reflect.Type) (m map[string]string, e error) {
+	//capture errors because we're going cowboy with reflect
+	defer func() {
+		if i := recover(); i != nil {
+			if err, ok := i.(error); ok {
+				e = err
+			}
+			panic(i)
+		}
+	}()
+
+	res := map[string]string{}
+	for i := 0; i < typ.NumField(); i++ {
+		field, name := indirectType(typ.Field(i).Type), typ.Field(i).Name
+
+		if !validType(field) {
+			return nil, errors.New(fmt.Sprintf("Unsupported type: %s", field.Kind()))
+		}
+
+		if field.Kind() != reflect.Struct {
+			res[name] = ""
+			continue
+		}
+
+		data, err := createEmptyValuesType(field)
+		if err != nil {
+			return nil, err
+		}
+
+		//copy the data in
+		for k, v := range data {
+			res[fmt.Sprintf("%s.%s", name, k)] = v
+		}
+	}
+
+	return res, nil
+}
+
+//validType checks to see if the reflect.Type's Kind is a supported type. These types
+//are the basic go types (int/string/etc.). More may be supported in the future.
+func validType(typ reflect.Type) bool {
+	switch typ.Kind() {
+	case reflect.Slice, reflect.Array, reflect.Chan, reflect.Map, reflect.Uintptr,
+		reflect.Complex128, reflect.Complex64, reflect.Func, reflect.UnsafePointer,
+		reflect.Ptr, reflect.Interface:
+		return false
+	}
+	return true
 }
 
 //alloc walks up a type through indirections and interfaces allocating as needed
@@ -264,7 +403,7 @@ func Load(form url.Values, obj interface{}) (LoadingErrors, error) {
 func apply(obj reflect.Value, data d, prefix string) (LoadingErrors, error) {
 	//make sure we have a good value
 	if obj.Kind() != reflect.Struct || !obj.CanSet() || !obj.IsValid() {
-		return nil, errors.New("Attempted to apply on something that wasn't a struct or was invalid")
+		return nil, errors.New(fmt.Sprintf("Attempted to apply on something that wasn't a struct or was invalid - CanSet(%v) IsValid(%v) Kind(%s)", obj.CanSet(), obj.IsValid(), obj.Kind()))
 	}
 
 	//set up our holders
@@ -274,6 +413,11 @@ func apply(obj reflect.Value, data d, prefix string) (LoadingErrors, error) {
 		field, name := alloc(obj.Field(i)), typ.Field(i).Name
 		if _, ex := data[name]; !ex {
 			continue
+		}
+
+		//make sure the field is ok
+		if t := indirectType(typ.Field(i).Type); !validType(t) {
+			return nil, errors.New(fmt.Sprintf("Attempted to load into a %v, an invalid type.", t))
 		}
 
 		//handle basic field types

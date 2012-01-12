@@ -7,6 +7,20 @@ import (
 	"testing"
 )
 
+func TestAdminRegisterNoID(t *testing.T) {
+	h := &Admin{
+		Renderer: &TestRenderer{},
+	}
+
+	defer func() {
+		if err := recover(); err == nil {
+			t.Fatal("No panic when attempting to register a type with no ID")
+		}
+	}()
+
+	h.Register(T7{}, "admin_test.T7", nil)
+}
+
 func TestRegisterWorks(t *testing.T) {
 	h := &Admin{
 		Renderer: &TestRenderer{},
@@ -18,6 +32,22 @@ func TestRegisterWorks(t *testing.T) {
 	if _, ok := ans.(*T); !ok {
 		t.Fatalf("Type incorrect. Expected *admin.T, got %T", ans)
 	}
+}
+
+func TestRegisterPointer(t *testing.T) {
+	h := &Admin{
+		Renderer: &TestRenderer{},
+	}
+
+	h.Register(&T{}, "admin_test.T", nil)
+
+	defer func() {
+		if err := recover(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	h.newType("admin_test.T")
 }
 
 func TestRegisterDuplicate(t *testing.T) {

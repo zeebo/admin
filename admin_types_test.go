@@ -23,14 +23,17 @@ func (t T2) GetTemplate() string        { return `` }
 func (t T2) Validate() ValidationErrors { return nil }
 
 //T3 is a type that has an invalid template
-type T3 struct{}
+type T3 struct {
+	ID bson.ObjectId `bson:"_id,omitempty"`
+}
 
 func (t T3) GetTemplate() string        { return `{{` }
 func (t T3) Validate() ValidationErrors { return nil }
 
 //T4 is a type that cannot be managed by the loader
 type T4 struct {
-	x []string
+	ID bson.ObjectId `bson:"_id,omitempty"`
+	x  []string
 }
 
 func (t T4) GetTemplate() string        { return `` }
@@ -39,7 +42,8 @@ func (t T4) Validate() ValidationErrors { return nil }
 //T5 is a type that cannot be managed by the loader but has a custom loader
 //to allow it to work
 type T5 struct {
-	x []string
+	ID bson.ObjectId `bson:"_id,omitempty"`
+	x  []string
 }
 
 func (t T5) GetTemplate() string                      { return `` }
@@ -57,3 +61,9 @@ type T6 struct {
 
 func (t T6) GetTemplate() string        { return `` }
 func (t T6) Validate() ValidationErrors { return nil }
+
+//T7 is a type that has no ID
+type T7 struct{}
+
+func (t T7) GetTemplate() string        { return `` }
+func (t T7) Validate() ValidationErrors { return nil }

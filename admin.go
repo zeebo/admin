@@ -4,6 +4,7 @@ import (
 	"errors"
 	"launchpad.net/mgo"
 	"net/http"
+	"reflect"
 	"strings"
 )
 
@@ -13,11 +14,14 @@ type Admin struct {
 	Session  *mgo.Session      //The mongo session for managing.
 	Renderer Renderer          //If nil, a default renderer is used to render the admin pages.
 	Routes   map[string]string //Routes lets you change the url paths. If nil, uses DefaultRoutes.
+	Prefix   string            //The path the admin is mounted to in the handler.
 
 	//created on demand
 	server      *http.ServeMux
 	types       map[string]collectionInfo
 	index_cache map[string][]string
+	object_id   map[reflect.Type]int
+	object_coll map[reflect.Type]string
 }
 
 //DefaultRoutes is the mapping of actions to url paths.
@@ -47,6 +51,20 @@ var routes = map[string]adminHandler{
 	"create": (*Admin).create,
 	"detail": (*Admin).detail,
 	"delete": (*Admin).delete,
+}
+
+//initializeCache makes values in the admin for caching lookups if they don't yet
+//exist.
+func (a *Admin) initializeCache() {
+	if a.types == nil {
+		a.types = make(map[string]collectionInfo)
+	}
+	if a.object_id == nil {
+		a.object_id = make(map[reflect.Type]int)
+	}
+	if a.object_coll == nil {
+		a.object_coll = make(map[reflect.Type]string)
+	}
 }
 
 //generateMux creates the internal http.ServeMux to dispatch reqeusts to the
@@ -119,6 +137,9 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		a.Renderer.InternalError(w, req, errors.New("Mongo session not configured"))
 		return
 	}
+
+	//strip off the prefix
+	req.URL.Path = req.URL.Path[len(a.Prefix):]
 
 	//pass it off to our internal muxer
 	a.generateMux()

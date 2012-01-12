@@ -27,13 +27,12 @@ type collectionInfo struct {
 //has any compilation errors. Panics if the type cannot be handled by the loading
 //engine (must be composed of valid types)
 func (a *Admin) Register(typ Formable, dbcoll string, opt *Options) {
-	if a.types == nil {
-		a.types = make(map[string]collectionInfo)
-	}
+	a.initializeCache()
+
 	if !strings.Contains(dbcoll, ".") {
 		panic("Database/collection specifier does not contain a .")
 	}
-	t := reflect.TypeOf(typ)
+	t := indirectType(reflect.TypeOf(typ))
 	if ci, ok := a.types[dbcoll]; ok {
 		panic(fmt.Sprintf("db.collection already registered. Had %q->%s . Got %q->%s", dbcoll, ci.Type, dbcoll, t))
 	}
@@ -49,6 +48,22 @@ func (a *Admin) Register(typ Formable, dbcoll string, opt *Options) {
 		}
 	}
 
+	//now ensure that we can find out where the id is. Look for a bson:_id tag
+	var i int
+	for i = 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		for _, tag := range strings.Split(field.Tag.Get("bson"), ",") {
+			if tag == "_id" {
+				goto found
+			}
+		}
+	}
+	panic("Unable to find a field that is an id. Be sure to add a bson:_id to your struct")
+
+found:
+	//time to load up our data
+	a.object_id[t] = i
+	a.object_coll[t] = dbcoll
 	a.types[dbcoll] = collectionInfo{opt, t, templ}
 }
 

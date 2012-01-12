@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"io"
@@ -93,7 +94,7 @@ type IndexContext struct {
 
 //Key takes a database and collection and maps it to the key for urls. For
 //example, Key("db", "coll") -> db.coll
-func (i *IndexContext) Key(db, coll string) string {
+func (i IndexContext) Key(db, coll string) string {
 	return fmt.Sprintf("%s.%s", db, coll)
 }
 
@@ -154,12 +155,20 @@ type Form struct {
 }
 
 //Execute calls the template with the context and executes it to the writer
-func (f *Form) Execute(w io.Writer) error {
+func (f Form) Execute(w io.Writer) error {
 	return f.template.Execute(w, f.context)
+}
+
+//ExecuteText is for use in templates. It returns the string containing the
+//output of Execute.
+func (f Form) ExecuteText() string {
+	var buf bytes.Buffer
+	f.Execute(&buf)
+	return buf.String()
 }
 
 //Values returns the values map for the Form. This is useful for the Delete
 //renderer to display readonly values for the form.
-func (f *Form) Values() map[string]string {
+func (f Form) Values() map[string]string {
 	return f.context.Values
 }

@@ -49,3 +49,8 @@ func listParse(c mgo.Collection, v url.Values) *mgo.Iter {
 
 	return query.Iter()
 }
+
+type Pagination struct {
+	Pages       int
+	CurrentPage int
+}

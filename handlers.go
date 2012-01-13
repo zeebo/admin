@@ -23,6 +23,14 @@ func parseRequest(p string) (coll, id string) {
 	return
 }
 
+func (a *Admin) indexContext() IndexContext {
+	a.generateIndexCache()
+	return IndexContext{
+		Managed:  a.index_cache,
+		Reverser: Reverser{a},
+	}
+}
+
 //Presents the detail view for an object in a collection
 func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)
@@ -59,12 +67,13 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.Detail(w, req, DetailContext{
-		Object: t,
+		IndexContext: a.indexContext(),
+		Collection:   coll,
+		Object:       t,
 		Form: Form{
 			template: a.types[coll].Template,
 			context:  ctx,
 		},
-		Reverser: Reverser{a},
 	})
 }
 
@@ -117,15 +126,16 @@ func (a *Admin) delete(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.Delete(w, req, DeleteContext{
-		Object:    t,
-		Attempted: attempted,
-		Success:   success,
-		Error:     err,
+		IndexContext: a.indexContext(),
+		Collection:   coll,
+		Object:       t,
+		Attempted:    attempted,
+		Success:      success,
+		Error:        err,
 		Form: Form{
 			template: a.types[coll].Template,
 			context:  ctx,
 		},
-		Reverser: Reverser{a},
 	})
 }
 
@@ -139,11 +149,7 @@ func (a *Admin) index(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	a.generateIndexCache()
-	a.Renderer.Index(w, req, IndexContext{
-		Managed:  a.index_cache,
-		Reverser: Reverser{a},
-	})
+	a.Renderer.Index(w, req, a.indexContext())
 }
 
 //Presents a list of objects in a collection matching filtering/sorting criteria
@@ -221,10 +227,11 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.List(w, req, ListContext{
-		Columns:  columns,
-		Values:   values,
-		Objects:  items,
-		Reverser: Reverser{a},
+		IndexContext: a.indexContext(),
+		Collection:   coll,
+		Columns:      columns,
+		Values:       values,
+		Objects:      items,
 	})
 }
 
@@ -290,11 +297,12 @@ render:
 	}
 
 	a.Renderer.Update(w, req, UpdateContext{
-		Object:    t,
-		Attempted: attempted,
-		Success:   success,
-		Form:      form,
-		Reverser:  Reverser{a},
+		IndexContext: a.indexContext(),
+		Collection:   coll,
+		Object:       t,
+		Attempted:    attempted,
+		Success:      success,
+		Form:         form,
 	})
 }
 
@@ -369,10 +377,11 @@ render:
 	}
 
 	a.Renderer.Create(w, req, CreateContext{
-		Attempted: attempted,
-		Success:   success,
-		Form:      form,
-		Reverser:  Reverser{a},
+		IndexContext: a.indexContext(),
+		Collection:   coll,
+		Attempted:    attempted,
+		Success:      success,
+		Form:         form,
 	})
 }
 

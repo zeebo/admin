@@ -42,9 +42,10 @@ type Renderer interface {
 //It comes loaded with the instance of the object found, and a Form that
 //represents the form for the object.
 type DetailContext struct {
-	Object   interface{}
-	Form     Form
-	Reverser Reverser
+	IndexContext
+	Collection string
+	Object     interface{}
+	Form       Form
 }
 
 //DeleteContext is the type passed to the Delete method.
@@ -54,22 +55,24 @@ type DetailContext struct {
 //to the same page. Error is the error in attempting to delete the object, if
 //one exists.
 type DeleteContext struct {
-	Object    interface{}
-	Attempted bool
-	Success   bool
-	Error     error
-	Form      Form
-	Reverser  Reverser
+	IndexContext
+	Collection string
+	Object     interface{}
+	Attempted  bool
+	Success    bool
+	Error      error
+	Form       Form
 }
 
 //ListContext is the type passed in to the List method.
 //It comes loaded with a slice of objects selected by the List view. If no
 //objects match the passed in query, the slice will be nil.
 type ListContext struct {
-	Columns  []string
-	Values   [][]string
-	Objects  []interface{}
-	Reverser Reverser
+	IndexContext
+	Collection string
+	Columns    []string
+	Values     [][]string
+	Objects    []interface{}
 }
 
 //UpdateContext is the type passed in to the Update method.
@@ -78,23 +81,25 @@ type ListContext struct {
 //The object always reflects the most recent data in the database.
 //It also comes with a Form that represents the form for the object.
 type UpdateContext struct {
-	Object    interface{}
-	Attempted bool
-	Success   bool
-	Error     error
-	Form      Form
-	Reverser  Reverser
+	IndexContext
+	Collection string
+	Object     interface{}
+	Attempted  bool
+	Success    bool
+	Error      error
+	Form       Form
 }
 
 //CreateContext is the type passed in to the Create method.
 //It comes with booleans indicating if the creation was attempted and successful.
 //It also comes with a Form that represents the form for the object.
 type CreateContext struct {
-	Attempted bool
-	Success   bool
-	Error     error
-	Form      Form
-	Reverser  Reverser
+	IndexContext
+	Collection string
+	Attempted  bool
+	Success    bool
+	Error      error
+	Form       Form
 }
 
 //IndexContext is the type passed in to the Index method. It contains the

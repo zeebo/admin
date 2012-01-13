@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -67,7 +68,7 @@ func (d *defaultRenderer) Lookup(name string) *template.Template {
 
 	t := (<-d.currtemp).Lookup(name)
 	if t == nil {
-		panic("Can't find requested template: " + name)
+		panic(errors.New("Can't find requested template: " + name))
 	}
 
 	return t

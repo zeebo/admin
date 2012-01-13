@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -120,10 +121,10 @@ func (i IndexContext) Key(db, coll string) string {
 //a simple template that uses the TemplateContext for this struct could look like
 //
 //	func (m *MyForm) GetTemplate() string {
-//		return `<span class="errors">{{.Errors "X"}}</span>
-//			<input type="text" value="{{.Values "X"}}" name="X">
-//			<span class="errors">{{.Errors "Y"}}</span>
-//			<input type="text" value="{{.Values "Y"}}" name="Y">
+//		return `<span class="errors">{{.Errors.X}}</span>
+//			<input type="text" value="{{.Values.X}}" name="X">
+//			<span class="errors">{{.Errors.Y}}</span>
+//			<input type="text" value="{{.Values.Y}}" name="Y">
 //			<input type="submit">`
 //	}
 //
@@ -140,22 +141,6 @@ func NewTemplateContext() TemplateContext {
 	return TemplateContext{map[string]error{}, map[string]string{}}
 }
 
-//Error returns any error text from validation for a specific field.
-func (t *TemplateContext) Error(field string) string {
-	if v, ex := t.Errors[field]; ex && v != nil {
-		return v.Error()
-	}
-	return ""
-}
-
-//Value returns the value the user input into the form after validation.
-func (t *TemplateContext) Value(field string) string {
-	if v, ex := t.Values[field]; ex {
-		return v
-	}
-	return ""
-}
-
 //Form encapsulates a form with a context with the ability to execute and output
 //the correct html.
 type Form struct {
@@ -170,10 +155,12 @@ func (f Form) Execute(w io.Writer) error {
 
 //ExecuteText is for use in templates. It returns the string containing the
 //output of Execute.
-func (f Form) ExecuteText() string {
+func (f Form) ExecuteText() template.HTML {
 	var buf bytes.Buffer
-	f.Execute(&buf)
-	return buf.String()
+	if err := f.Execute(&buf); err != nil {
+		log.Println(err)
+	}
+	return template.HTML(buf.String())
 }
 
 //Values returns the values map for the Form. This is useful for the Delete

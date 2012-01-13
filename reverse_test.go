@@ -15,6 +15,10 @@ func TestReverseIdFor(t *testing.T) {
 	if r.idFor(x) != "ffffffffffffffffffffffff" {
 		t.Fatalf("Expected %q. Got %q.", "ffffffffffffffffffffffff", r.idFor(x))
 	}
+
+	if r.idFor(&x) != "ffffffffffffffffffffffff" {
+		t.Fatalf("Expected %q. Got %q.", "ffffffffffffffffffffffff", r.idFor(x))
+	}
 }
 
 func TestReverseCollFor(t *testing.T) {

@@ -139,7 +139,8 @@ func (a *Admin) index(w http.ResponseWriter, req *http.Request) {
 
 	a.generateIndexCache()
 	a.Renderer.Index(w, req, IndexContext{
-		Managed: a.index_cache,
+		Managed:  a.index_cache,
+		Reverser: Reverser{a},
 	})
 }
 

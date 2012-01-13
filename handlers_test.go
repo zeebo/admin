@@ -71,11 +71,17 @@ func TestListInvalid(t *testing.T) {
 		Session:  session,
 		Renderer: &TestRenderer{},
 	}
+	h.Register(&T{}, "admin_test.T", nil)
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/list/")
 	if w.Status != http.StatusNotFound {
 		t.Fatalf("List did not 404 without collection. Got %d", w.Status)
+	}
+
+	w = Get(t, h, "/list/admin_test.T/fasdfasdf")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("List did not 404 with id. Got %d", w.Status)
 	}
 }
 

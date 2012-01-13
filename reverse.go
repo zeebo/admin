@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
 	"path"
 	"reflect"
@@ -15,10 +16,15 @@ type Reverser struct {
 //idFor consults the admins object_id cache to find the field containing the ID
 //for the object and returns that id as a string.
 func (r Reverser) idFor(thing interface{}) string {
-	typ, val := reflect.TypeOf(thing), reflect.ValueOf(thing)
+	typ := indirectType(reflect.TypeOf(thing))
+	val, err := indirect(reflect.ValueOf(thing))
+	if err != nil {
+		return ""
+	}
+
 	idx, ex := r.admin.object_id[typ]
 	if !ex {
-		panic(fmt.Sprintf("Don't know how to get the id for a %T", thing))
+		panic(errors.New(fmt.Sprintf("Don't know how to get the id for a %T", thing)))
 	}
 
 	id := val.Field(idx).Interface()
@@ -35,7 +41,7 @@ func (r Reverser) collFor(thing interface{}) string {
 	typ := indirectType(reflect.TypeOf(thing))
 	col, ex := r.admin.object_coll[typ]
 	if !ex {
-		panic(fmt.Sprintf("Don't know how to get the collection for a %T", thing))
+		panic(errors.New(fmt.Sprintf("Don't know how to get the collection for a %T", thing)))
 	}
 	return col
 }

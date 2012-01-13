@@ -11,14 +11,33 @@ import (
 
 type doNothingResponseWriter struct{}
 
-func (d doNothingResponseWriter) Header() http.Header {
-	return make(http.Header)
-}
-func (d doNothingResponseWriter) Write(b []byte) (int, error) {
-	return len(b), nil
-}
-func (d doNothingResponseWriter) WriteHeader(n int) {
+func (d doNothingResponseWriter) Header() http.Header         { return make(http.Header) }
+func (d doNothingResponseWriter) Write(b []byte) (int, error) { return len(b), nil }
+func (d doNothingResponseWriter) WriteHeader(n int)           {}
 
+func channelSendHelper(p, q chan bool) {
+	select {
+	case q <- true:
+	default:
+		p <- true
+		return
+	}
+	panic("never reached")
+}
+
+func BenchmarkChannelSend(b *testing.B) {
+	var (
+		p chan bool
+		q = make(chan bool, 1)
+	)
+	q <- true
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p = make(chan bool)
+		go channelSendHelper(p, q)
+		<-p
+	}
 }
 
 func BenchmarkReverse(b *testing.B) {

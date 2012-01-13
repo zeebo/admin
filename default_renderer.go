@@ -26,10 +26,6 @@ func (d *defaultRenderer) Lookup(name string) *template.Template {
 	go d.Watch(ch)
 	<-ch
 
-	if d.templates == nil {
-		panic("Error compiling templates with nothing to fall back on.")
-	}
-
 	t := d.templates.Lookup(name)
 	if t == nil {
 		panic("Can't find requested template: " + name)
@@ -47,6 +43,43 @@ func (d *defaultRenderer) TemplateDir() string {
 	return "./templates"
 }
 
+//updateMtimes globs the template directory for files and checks their modified
+//times to see if they differ, updating the mtimes cache.
+func (d *defaultRenderer) updateMtimes() (bool, error) {
+	if d.mtimes == nil {
+		d.mtimes = make(map[string]time.Time)
+	}
+
+	files, err := filepath.Glob(filepath.Join(d.TemplateDir(), "*"))
+	if err != nil {
+		return false, err
+	}
+
+	var changes bool
+	for _, file := range files {
+		hnd, err := os.Open(file)
+		if err != nil {
+			return false, err
+		}
+		defer hnd.Close()
+
+		info, err := hnd.Stat()
+		if err != nil {
+			return false, err
+		}
+
+		mtime := info.ModTime()
+		if pmtime, ex := d.mtimes[file]; !ex || mtime != pmtime {
+			changes = true
+			d.mtimes[file] = mtime
+		}
+	}
+
+	return changes, nil
+}
+
+//Watch watches the template directory every second for modifications and
+//recompiles the templates.
 func (d *defaultRenderer) Watch(parsed chan bool) {
 	//only ever spawn one
 	select {
@@ -55,26 +88,42 @@ func (d *defaultRenderer) Watch(parsed chan bool) {
 		parsed <- true
 		return
 	}
-	var (
-		sentParsed bool
-		ticker     = time.NewTicker(1e9) //1 sec
-	)
+
+	//prime it with a parse
+	_, err := d.updateMtimes()
+	if err != nil {
+		panic(err)
+	}
+	t, err := template.ParseGlob(filepath.Join(d.TemplateDir(), "*"))
+	if err != nil {
+		panic(err)
+	}
+	d.templates = t
+	parsed <- true
+
+	var ticker = time.NewTicker(1e9) //1 sec
 	//do our watching in a forever loop
 	for {
-		//TODO: detect changes instead of just parsing every time
+		<-ticker.C
+
+		changed, err := d.updateMtimes()
+		if err != nil {
+			log.Printf("Error checking modified times: %s", err)
+			continue
+		}
+
+		if !changed {
+			continue
+		}
 
 		t, err := template.ParseGlob(filepath.Join(d.TemplateDir(), "*"))
 		if err != nil {
 			log.Printf("Error parsing templates: %s", err)
-		} else {
-			d.templates = t
-		}
-		if !sentParsed {
-			parsed <- true
-			sentParsed = true
+			continue
 		}
 
-		<-ticker.C
+		d.templates = t
+		log.Printf("Templates updated.")
 	}
 }
 

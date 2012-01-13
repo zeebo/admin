@@ -13,8 +13,9 @@ import (
 type Renderer interface {
 	//Error modes
 	//
-	//NotFound must return a http.StatusNotFound and InternalError must return
-	//an http.StatusInternalServiceError to be compliant. The error that caused
+	//NotFound must return a http.StatusNotFound, InternalError must return
+	//an http.StatusInternalServiceError, and Unauthorized must return a
+	//http.StatusUnauthorized to be compliant. The error that caused
 	//the exception is passed in.
 	NotFound(http.ResponseWriter, *http.Request)
 	InternalError(http.ResponseWriter, *http.Request, error)

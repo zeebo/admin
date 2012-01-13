@@ -25,7 +25,8 @@ type collectionInfo struct {
 //to the same collection. Dbcolls are dot separated database/collection specifiers.
 //Panics if no database is specified. Panics if the template returned by the Formable
 //has any compilation errors. Panics if the type cannot be handled by the loading
-//engine (must be composed of valid types)
+//engine (must be composed of valid types. See Load for discussion on which types
+//are valid.) Panics if it can't find a field with a bson:_id tag.
 func (a *Admin) Register(typ Formable, dbcoll string, opt *Options) {
 	a.initializeCache()
 

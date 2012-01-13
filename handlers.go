@@ -107,6 +107,7 @@ func (a *Admin) delete(w http.ResponseWriter, req *http.Request) {
 		success = err == nil
 	}
 
+	//create the values for the template
 	ctx, err := generateContext(t, nil)
 	if err != nil {
 		a.Renderer.InternalError(w, req, err)

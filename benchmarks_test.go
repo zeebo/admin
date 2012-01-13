@@ -21,6 +21,18 @@ func (d doNothingResponseWriter) WriteHeader(n int) {
 
 }
 
+func BenchmarkReverse(b *testing.B) {
+	h := &Admin{}
+	r := Reverser{h}
+	h.Register(T{}, "admin_test.T", nil)
+	h.generateMux()
+	var x T = T{"ffffffffffff"}
+
+	for i := 0; i < b.N; i++ {
+		r.DetailObj(x)
+	}
+}
+
 func BenchmarkGetIndex(b *testing.B) {
 	h := &Admin{
 		Session:  session,

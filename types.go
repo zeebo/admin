@@ -13,12 +13,50 @@ type Options struct {
 	Columns []string
 }
 
+//loadType loads the cache data for a type. Panics if there are any problems.
+func findIds(typ reflect.Type, columns []string) []int {
+
+	//if columns is nil, do every column!
+	if columns == nil {
+		ids := make([]int, typ.NumField())
+		for i := range ids {
+			ids[i] = i
+		}
+		return ids
+	}
+
+	//otherwise
+	ids := make([]int, len(columns))
+	for i, col := range columns {
+		var (
+			found bool
+			field reflect.StructField
+		)
+
+		//do a simple search
+		for j := 0; j < typ.NumField(); j++ {
+			field = typ.Field(j)
+			if field.Name == col {
+				ids[i] = j
+				found = true
+				break
+			}
+		}
+
+		//panic if we didnt find it
+		if !found {
+			panic(fmt.Sprintf("Can't find a column named %s on type %s", col, typ))
+		}
+	}
+	return ids
+}
+
 //Stores info about a specific collection, like the type of the object it
 //represents and any options used in specifying the type
 type collectionInfo struct {
-	Options  *Options
-	Type     reflect.Type
-	Template *template.Template
+	Type      reflect.Type
+	Template  *template.Template
+	ColumnIds []int
 }
 
 //Registers the type/collection pair in the admin. Panics if two types are mapped
@@ -65,7 +103,16 @@ found:
 	//time to load up our data
 	a.object_id[t] = i
 	a.object_coll[t] = dbcoll
-	a.types[dbcoll] = collectionInfo{opt, t, templ}
+
+	var ids []int
+
+	if opt == nil {
+		ids = findIds(t, nil)
+	} else {
+		ids = findIds(t, opt.Columns)
+	}
+
+	a.types[dbcoll] = collectionInfo{t, templ, ids}
 }
 
 //Unregisters the information for the colleciton. Panics if you attempt to unregister

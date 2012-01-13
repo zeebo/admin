@@ -66,6 +66,8 @@ type DeleteContext struct {
 //It comes loaded with a slice of objects selected by the List view. If no
 //objects match the passed in query, the slice will be nil.
 type ListContext struct {
+	Columns  []string
+	Values   [][]string
 	Objects  []interface{}
 	Reverser Reverser
 }

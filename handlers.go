@@ -1,9 +1,11 @@
 package admin
 
 import (
+	"fmt"
 	"launchpad.net/gobson/bson"
 	"net/http"
 	"path"
+	"reflect"
 	"strings"
 )
 
@@ -161,6 +163,10 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 
 	c := a.collFor(coll)
 
+	//TODO: make this load into a map[string]interface{} instead
+	//to reduce the amount of reflection we need to do. We can't get
+	//objects that way though so see if thats an issue.
+
 	//grab the data
 	var items []interface{}
 	iter := listParse(c, req.URL.Query())
@@ -175,9 +181,48 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 	//report any errors our iterator made
 	if err := iter.Err(); err != nil {
 		a.Renderer.InternalError(w, req, err)
+		return
+	}
+
+	ids := a.types[coll].ColumnIds
+
+	//generate the columns
+	columns := make([]string, len(ids))
+	typ := a.types[coll].Type
+	for j, idx := range ids {
+		columns[j] = typ.Field(idx).Name
+	}
+
+	//make the values :(
+	values := make([][]string, len(items))
+	for i, obj := range items {
+		val, err := indirect(reflect.ValueOf(obj))
+		if err != nil {
+			a.Renderer.InternalError(w, req, err)
+			return
+		}
+
+		values[i] = make([]string, len(ids))
+
+		for j, idx := range ids {
+			var data string
+
+			//TODO: make things that involve hexable into a function that gets
+			//called.
+			switch item := val.Field(idx).Interface().(type) {
+			case hexable:
+				data = item.Hex()
+			default:
+				data = fmt.Sprint(item)
+			}
+
+			values[i][j] = data
+		}
 	}
 
 	a.Renderer.List(w, req, ListContext{
+		Columns:  columns,
+		Values:   values,
 		Objects:  items,
 		Reverser: Reverser{a},
 	})

@@ -388,6 +388,8 @@ func TestListNumPage(t *testing.T) {
 	}
 }
 
+//TODO: test list columns working correctly
+
 func TestListInvalidParams(t *testing.T) {
 	r := &TestRenderer{}
 	h := &Admin{

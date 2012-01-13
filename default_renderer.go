@@ -9,24 +9,63 @@ import (
 	"time"
 )
 
+//newDefaultRenderer returns a *defaultRenderer ready to be used.
+func newDefaultRenderer() *defaultRenderer {
+	return &defaultRenderer{
+		initd:    make(chan bool, 1),
+		mtimes:   make(map[string]time.Time),
+		newtemp:  make(chan *template.Template),
+		currtemp: make(chan *template.Template),
+	}
+}
+
 //defaultRenderer conforms to the Renderer interface and uses some magic templates
 //to create a pretty default interface.
 type defaultRenderer struct {
-	templates *template.Template
-	watcher   chan bool
-	mtimes    map[string]time.Time
+	initd    chan bool
+	mtimes   map[string]time.Time
+	newtemp  chan *template.Template
+	currtemp chan *template.Template
+}
+
+//init is called once on a defaultRenderer. Sets up the system for watching
+//the directory of templates.
+func (d *defaultRenderer) init() {
+	//only init once
+	select {
+	case d.initd <- true:
+	default:
+		return
+	}
+
+	//seed the parsing
+	tmpl, err := d.parse()
+	if err != nil {
+		panic(err)
+	}
+
+	//setup watchers
+	go d.watch()
+	go d.sender(tmpl)
+}
+
+//sender is a simple function to always send out the most current template (with
+//very low probability that it stays outdated for long.)
+func (d *defaultRenderer) sender(curr *template.Template) {
+	for {
+		select {
+		case curr = <-d.newtemp:
+		case d.currtemp <- curr:
+		}
+	}
 }
 
 //Lookup returns a template ready to be executed from the template cache, starting
 //the watcher goroutine if it has not been started to recompile things at runtime.
 func (d *defaultRenderer) Lookup(name string) *template.Template {
-	ch := make(chan bool)
+	d.init()
 
-	//wait for it to parse
-	go d.Watch(ch)
-	<-ch
-
-	t := d.templates.Lookup(name)
+	t := (<-d.currtemp).Lookup(name)
 	if t == nil {
 		panic("Can't find requested template: " + name)
 	}
@@ -34,9 +73,9 @@ func (d *defaultRenderer) Lookup(name string) *template.Template {
 	return t
 }
 
-//TemplateDir looks at the environment to find out where the templates live.
+//dir looks at the environment to find out where the templates live.
 //The default value is "./templates"
-func (d *defaultRenderer) TemplateDir() string {
+func (d *defaultRenderer) dir() string {
 	if dir := os.Getenv("ADMIN_TEMPLATE_DIR"); dir != "" {
 		return dir
 	}
@@ -46,24 +85,14 @@ func (d *defaultRenderer) TemplateDir() string {
 //updateMtimes globs the template directory for files and checks their modified
 //times to see if they differ, updating the mtimes cache.
 func (d *defaultRenderer) updateMtimes() (bool, error) {
-	if d.mtimes == nil {
-		d.mtimes = make(map[string]time.Time)
-	}
-
-	files, err := filepath.Glob(filepath.Join(d.TemplateDir(), "*"))
+	files, err := filepath.Glob(filepath.Join(d.dir(), "*"))
 	if err != nil {
 		return false, err
 	}
 
 	var changes bool
 	for _, file := range files {
-		hnd, err := os.Open(file)
-		if err != nil {
-			return false, err
-		}
-		defer hnd.Close()
-
-		info, err := hnd.Stat()
+		info, err := os.Stat(file)
 		if err != nil {
 			return false, err
 		}
@@ -78,53 +107,38 @@ func (d *defaultRenderer) updateMtimes() (bool, error) {
 	return changes, nil
 }
 
-//Watch watches the template directory every second for modifications and
+//watch watches the template directory every second for modifications and
 //recompiles the templates.
-func (d *defaultRenderer) Watch(parsed chan bool) {
-	//only ever spawn one
-	select {
-	case d.watcher <- true:
-	default:
-		parsed <- true
-		return
-	}
-
-	//prime it with a parse
-	_, err := d.updateMtimes()
-	if err != nil {
-		panic(err)
-	}
-	t, err := template.ParseGlob(filepath.Join(d.TemplateDir(), "*"))
-	if err != nil {
-		panic(err)
-	}
-	d.templates = t
-	parsed <- true
-
+func (d *defaultRenderer) watch() {
 	var ticker = time.NewTicker(1e9) //1 sec
 	//do our watching in a forever loop
 	for {
 		<-ticker.C
 
-		changed, err := d.updateMtimes()
-		if err != nil {
-			log.Printf("Error checking modified times: %s", err)
-			continue
-		}
-
-		if !changed {
-			continue
-		}
-
-		t, err := template.ParseGlob(filepath.Join(d.TemplateDir(), "*"))
+		tmpl, err := d.parse()
 		if err != nil {
 			log.Printf("Error parsing templates: %s", err)
 			continue
 		}
 
-		d.templates = t
-		log.Printf("Templates updated.")
+		if tmpl != nil {
+			d.newtemp <- tmpl
+			log.Printf("Templates updated.")
+		}
 	}
+}
+
+//parse checks the modified times and parses the template directory if required.
+func (d *defaultRenderer) parse() (*template.Template, error) {
+	changed, err := d.updateMtimes()
+	if err != nil {
+		return nil, err
+	}
+	if !changed {
+		return nil, nil
+	}
+
+	return template.ParseGlob(filepath.Join(d.dir(), "*"))
 }
 
 //NotFound presents a basic 404 with no special body.

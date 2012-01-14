@@ -73,6 +73,7 @@ type ListContext struct {
 	Columns    []string
 	Values     [][]string
 	Objects    []interface{}
+	Pagination Pagination
 }
 
 //UpdateContext is the type passed in to the Update method.

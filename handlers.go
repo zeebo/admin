@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 	"launchpad.net/gobson/bson"
+	"math"
 	"net/http"
 	"path"
 	"reflect"
@@ -173,9 +174,14 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 	//to reduce the amount of reflection we need to do. We can't get
 	//objects that way though so see if thats an issue.
 
+	total, err := c.Find(nil).Count()
+	if err != nil {
+		a.Renderer.InternalError(w, req, err)
+	}
+
 	//grab the data
 	var items []interface{}
-	iter := listParse(c, req.URL.Query())
+	iter, page, numpage := listParse(c, req.URL.Query())
 	for {
 		t := a.newType(coll)
 		if !iter.Next(t) {
@@ -232,6 +238,10 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 		Columns:      columns,
 		Values:       values,
 		Objects:      items,
+		Pagination: Pagination{
+			Pages:       int(math.Ceil(float64(total) / float64(numpage))),
+			CurrentPage: page,
+		},
 	})
 }
 

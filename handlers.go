@@ -232,6 +232,11 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	pages := int(math.Ceil(float64(total) / float64(numpage)))
+	if pages < 1 {
+		pages = 1
+	}
+
 	a.Renderer.List(w, req, ListContext{
 		IndexContext: a.indexContext(),
 		Collection:   coll,
@@ -239,7 +244,7 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 		Values:       values,
 		Objects:      items,
 		Pagination: Pagination{
-			Pages:       int(math.Ceil(float64(total) / float64(numpage))),
+			Pages:       pages,
 			CurrentPage: page,
 			query:       req.URL.Query(),
 		},

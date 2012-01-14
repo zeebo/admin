@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"launchpad.net/mgo"
 	"net/url"
 	"strconv"
@@ -56,6 +57,7 @@ func listParse(c mgo.Collection, v url.Values) (*mgo.Iter, int, int) {
 type Pagination struct {
 	Pages       int
 	CurrentPage int
+	query       url.Values
 }
 
 //PageList returns a list of integers of size n around the current page. For example
@@ -79,6 +81,11 @@ func (p Pagination) PageList(n int) []int {
 	return ints
 }
 
+//IsCurrent helps you determine if a given page number is the current page.
+func (p Pagination) IsCurrent(page int) bool {
+	return page == p.CurrentPage
+}
+
 //Next returns the numerical value of the next page. It returns 0 if it would be
 //past the last page.
 func (p Pagination) Next() int {
@@ -95,4 +102,11 @@ func (p Pagination) Prev() int {
 		return 0
 	}
 	return p.CurrentPage - 1
+}
+
+//Page adds the requested page to the passed in url.Values and returns the
+//encoded result.
+func (p Pagination) Page(n int) string {
+	p.query.Set("page", fmt.Sprint(n))
+	return "?" + p.query.Encode()
 }

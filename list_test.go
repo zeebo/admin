@@ -1,9 +1,13 @@
 package admin
 
-import "testing"
+import (
+	"fmt"
+	"net/url"
+	"testing"
+)
 
 func TestPagination(t *testing.T) {
-	p := Pagination{10, 5}
+	p := Pagination{10, 5, nil}
 
 	table := []struct {
 		given    int
@@ -28,6 +32,26 @@ func TestPagination(t *testing.T) {
 			if n != c.expected[i] {
 				t.Fatalf("Expected %v. Got %v.", c.expected, r)
 			}
+		}
+	}
+}
+
+func TestPaginationPage(t *testing.T) {
+	base_values := url.Values{
+		"numpage":  {"20"},
+		"sort__id": {"asc"},
+	}
+	p := Pagination{10, 5, base_values}
+
+	for i := 1; i < 10; i++ {
+		data := p.Page(i)[1:] //strip off ?
+		v, err := url.ParseQuery(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if v["numpage"][0] != "20" || v["sort__id"][0] != "asc" ||
+			v["page"][0] != fmt.Sprint(i) {
+			t.Fatalf("Expected %v + page.\nGot %v.", base_values, v)
 		}
 	}
 }

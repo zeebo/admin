@@ -241,6 +241,7 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 		Pagination: Pagination{
 			Pages:       int(math.Ceil(float64(total) / float64(numpage))),
 			CurrentPage: page,
+			query:       req.URL.Query(),
 		},
 	})
 }

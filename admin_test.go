@@ -124,30 +124,6 @@ func TestAdminNewTypeNewInstance(t *testing.T) {
 	}
 }
 
-func TestAdminUnauthorized(t *testing.T) {
-	h := &Admin{
-		Auth:     func(*http.Request) bool { return false },
-		Renderer: &TestRenderer{},
-	}
-
-	w := Get(t, h, "/")
-	if w.Status != http.StatusUnauthorized {
-		t.Fatalf("Failed being unauthorized. Got %d", w.Status)
-	}
-}
-
-func TestAdminAuthorized(t *testing.T) {
-	h := &Admin{
-		Auth:     func(*http.Request) bool { return true },
-		Renderer: &TestRenderer{},
-	}
-
-	w := Get(t, h, "/")
-	if w.Status == http.StatusUnauthorized {
-		t.Fatalf("Failed being authorized. Got %d", w.Status)
-	}
-}
-
 func TestAdminRegisterNoDatabase(t *testing.T) {
 	h := &Admin{}
 	defer func() {

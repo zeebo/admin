@@ -10,7 +10,7 @@ import (
 
 //Admin is an http.Handler for serving up the admin pages
 type Admin struct {
-	Auth     AuthFunc          //If not nil, the AuthFunc is called on every request.
+	Auth     Authorizer        //If not nil, admin is auth protected.
 	Session  *mgo.Session      //The mongo session for managing.
 	Renderer Renderer          //If nil, a default renderer is used to render the admin pages.
 	Routes   map[string]string //Routes lets you change the url paths. If nil, uses DefaultRoutes.
@@ -36,9 +36,6 @@ var DefaultRoutes = map[string]string{
 
 //useful type because these get made so often
 type d map[string]interface{}
-
-//AuthFunc is a function used to determine if the request is authorized.
-type AuthFunc func(*http.Request) bool
 
 //adminHandler is a type representing a handler function on an *Admin.
 type adminHandler func(*Admin, http.ResponseWriter, *http.Request)
@@ -125,10 +122,7 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		a.Renderer = newDefaultRenderer()
 	}
 
-	if a.Auth != nil && !a.Auth(req) {
-		a.Renderer.Unauthorized(w, req)
-		return
-	}
+	//TODO: use the authorizer
 
 	//ensure a valid database
 	if a.Session == nil {

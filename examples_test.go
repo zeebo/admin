@@ -42,7 +42,6 @@ func ExampleAdmin() {
 	a := &Admin{
 		Session:  session,
 		Renderer: &TestRenderer{},
-		Auth:     func(req *http.Request) bool { return true },
 		Routes: map[string]string{
 			"index":  "/1/",
 			"list":   "/2/",
@@ -60,12 +59,5 @@ func ExampleAdmin() {
 	http.Handle("/admin/", http.StripPrefix("/admin/", a))
 	if err := http.ListenAndServe(":11223", nil); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func ExampleAuthFunc() {
-	var _ AuthFunc = func(req *http.Request) bool {
-		_, err := req.Cookie("authorized")
-		return err == nil
 	}
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func TestReverseIdFor(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{Session: session}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
 	h.Init()
@@ -23,7 +23,7 @@ func TestReverseIdFor(t *testing.T) {
 }
 
 func TestReverseCollFor(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{Session: session}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
 	h.Init()
@@ -46,7 +46,7 @@ func TestReversePrefix(t *testing.T) {
 }
 
 func TestReverseDefaultObj(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{Session: session}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
 	h.Init()
@@ -81,6 +81,7 @@ func TestReverseCustomObj(t *testing.T) {
 			"auth":   "/6/",
 			"index":  "/",
 		},
+		Session: session,
 	}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
@@ -106,7 +107,7 @@ func TestReverseCustomObj(t *testing.T) {
 }
 
 func TestReverseDefaultSpecified(t *testing.T) {
-	h := &Admin{}
+	h := &Admin{Session: session}
 	r := Reverser{h}
 	coll, id := "admin_test.T", "ffffffffffffffffffffffff"
 
@@ -141,6 +142,7 @@ func TestReverseCustomSpecified(t *testing.T) {
 			"auth":   "/6/",
 			"index":  "/",
 		},
+		Session: session,
 	}
 	r := Reverser{h}
 	coll, id := "admin_test.T", "ffffffffffffffffffffffff"

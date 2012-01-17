@@ -11,12 +11,13 @@ import (
 )
 
 //newDefaultRenderer returns a *defaultRenderer ready to be used.
-func newDefaultRenderer() *defaultRenderer {
+func newDefaultRenderer(l *log.Logger) *defaultRenderer {
 	return &defaultRenderer{
 		initd:    make(chan bool, 1),
 		mtimes:   make(map[string]time.Time),
 		newtemp:  make(chan *template.Template),
 		currtemp: make(chan *template.Template),
+		logger:   l,
 	}
 }
 
@@ -27,6 +28,7 @@ type defaultRenderer struct {
 	mtimes   map[string]time.Time
 	newtemp  chan *template.Template
 	currtemp chan *template.Template
+	logger   *log.Logger
 }
 
 //init is called once on a defaultRenderer. Sets up the system for watching
@@ -118,13 +120,13 @@ func (d *defaultRenderer) watch() {
 
 		tmpl, err := d.parse()
 		if err != nil {
-			log.Printf("Error parsing templates: %s", err)
+			d.logger.Printf("Error parsing templates: %s", err)
 			continue
 		}
 
 		if tmpl != nil {
 			d.newtemp <- tmpl
-			log.Printf("Templates updated.")
+			d.logger.Print("Templates updated.")
 		}
 	}
 }

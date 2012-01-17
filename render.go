@@ -164,6 +164,7 @@ func NewTemplateContext() TemplateContext {
 type Form struct {
 	template *template.Template
 	context  TemplateContext
+	logger   *log.Logger
 }
 
 //Execute calls the template with the context and executes it to the writer
@@ -176,7 +177,7 @@ func (f Form) Execute(w io.Writer) error {
 func (f Form) ExecuteText() template.HTML {
 	var buf bytes.Buffer
 	if err := f.Execute(&buf); err != nil {
-		log.Println(err)
+		f.logger.Println(err)
 	}
 	return template.HTML(buf.String())
 }

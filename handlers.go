@@ -88,6 +88,7 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 		Form: Form{
 			template: a.types[coll].Template,
 			context:  ctx,
+			logger:   a.logger,
 		},
 	})
 }
@@ -150,6 +151,7 @@ func (a *Admin) delete(w http.ResponseWriter, req *http.Request) {
 		Form: Form{
 			template: a.types[coll].Template,
 			context:  ctx,
+			logger:   a.logger,
 		},
 	})
 }
@@ -318,6 +320,7 @@ func (a *Admin) update(w http.ResponseWriter, req *http.Request) {
 render:
 	var form = Form{
 		template: a.types[coll].Template,
+		logger:   a.logger,
 	}
 	if ctx, err := generateContext(t, errors); err != nil {
 		a.Renderer.InternalError(w, req, err)
@@ -386,6 +389,7 @@ func (a *Admin) create(w http.ResponseWriter, req *http.Request) {
 render:
 	var form = Form{
 		template: a.types[coll].Template,
+		logger:   a.logger,
 	}
 	if attempted {
 		if ctx, err := generateContext(t, errors); err != nil {

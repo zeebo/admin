@@ -1,8 +1,12 @@
 package admin
 
 import (
+	"crypto/rand"
+	"io"
 	"launchpad.net/mgo"
+	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
 )
@@ -21,6 +25,7 @@ type Admin struct {
 	Routes   map[string]string //Routes lets you change the url paths. If nil, uses DefaultRoutes.
 	Prefix   string            //The path the admin is mounted to in the handler.
 	Key      []byte            //Key for cryptographically signing cookies. Generated if nil.
+	Logger   io.Writer         //If nil, os.Stdout is used for logging information.
 
 	//created on demand
 	initd       bool
@@ -29,6 +34,7 @@ type Admin struct {
 	index_cache map[string][]string
 	object_id   map[reflect.Type]int
 	object_coll map[reflect.Type]string
+	logger      *log.Logger
 }
 
 //DefaultRoutes is the mapping of actions to url paths.
@@ -53,18 +59,26 @@ var routes = map[string]adminHandler{
 	"auth":   (*Admin).auth,
 }
 
-func (a *Admin) Init() *Admin {
+func (a *Admin) Init() {
 	//ensure a valid database
 	if a.Session == nil {
 		panic("Mongo session not configured")
 	}
 
 	//make defaults
-	if a.Renderer == nil {
-		a.Renderer = newDefaultRenderer()
-	}
 	if a.Routes == nil {
 		a.Routes = DefaultRoutes
+	}
+	if a.Key == nil {
+		a.generateKey(128) //128 byte key
+	}
+	if a.Logger == nil {
+		a.Logger = os.Stdout
+	}
+	a.logger = log.New(a.Logger, "ADMIN", log.LstdFlags)
+
+	if a.Renderer == nil {
+		a.Renderer = newDefaultRenderer(a.logger)
 	}
 
 	required := []string{"index", "list", "update", "create", "detail", "delete", "auth"}
@@ -78,8 +92,6 @@ func (a *Admin) Init() *Admin {
 	a.generateIndexCache()
 
 	a.initd = true
-
-	return a
 }
 
 //generateMux creates the internal http.ServeMux to dispatch reqeusts to the
@@ -107,6 +119,18 @@ func (a *Admin) generateIndexCache() {
 	for key := range a.types {
 		pieces := strings.Split(key, ".")
 		a.index_cache[pieces[0]] = append(a.index_cache[pieces[0]], pieces[1])
+	}
+}
+
+//generateKey generates a key for cryptographically signing cookie values.
+func (a *Admin) generateKey(size int) {
+	a.Key = make([]byte, size)
+	for p := 0; p < len(a.Key); {
+		n, err := rand.Read(a.Key[p:])
+		if err != nil {
+			panic("Error while generating key: " + err.Error())
+		}
+		p += n
 	}
 }
 

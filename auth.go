@@ -8,8 +8,11 @@ type Authorizer interface {
 
 type AuthResponse struct {
 	Passed   bool
+	Error    string
 	Username string
-	Key      interface{}
+
+	//Key must be marshallable by the json package
+	Key interface{}
 }
 
 type AuthFunc func(*http.Request) AuthResponse

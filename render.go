@@ -15,12 +15,10 @@ type Renderer interface {
 	//Error modes
 	//
 	//NotFound must return a http.StatusNotFound, InternalError must return
-	//an http.StatusInternalServiceError, and Unauthorized must return a
-	//http.StatusUnauthorized to be compliant. The error that caused
-	//the exception is passed in.
+	//an http.StatusInternalServiceError. The error that caused the exception is
+	//passed in.
 	NotFound(http.ResponseWriter, *http.Request)
 	InternalError(http.ResponseWriter, *http.Request, error)
-	Unauthorized(http.ResponseWriter, *http.Request)
 
 	//Handler modes
 	//
@@ -32,17 +30,19 @@ type Renderer interface {
 	//passed in context.
 	Detail(http.ResponseWriter, *http.Request, DetailContext)
 	Delete(http.ResponseWriter, *http.Request, DeleteContext)
-	Index(http.ResponseWriter, *http.Request, IndexContext)
+	Index(http.ResponseWriter, *http.Request, BaseContext)
 	List(http.ResponseWriter, *http.Request, ListContext)
 	Update(http.ResponseWriter, *http.Request, UpdateContext)
 	Create(http.ResponseWriter, *http.Request, CreateContext)
+	Authorize(http.ResponseWriter, *http.Request, AuthorizeContext)
+	LoggedOut(http.ResponseWriter, *http.Request, BaseContext)
 }
 
 //DetailContext is the type passed to the Detail method.
 //It comes loaded with the instance of the object found, and a Form that
 //represents the form for the object.
 type DetailContext struct {
-	IndexContext
+	BaseContext
 	Collection string
 	Object     interface{}
 	Form       Form
@@ -55,7 +55,7 @@ type DetailContext struct {
 //to the same page. Error is the error in attempting to delete the object, if
 //one exists.
 type DeleteContext struct {
-	IndexContext
+	BaseContext
 	Collection string
 	Object     interface{}
 	Attempted  bool
@@ -68,7 +68,7 @@ type DeleteContext struct {
 //It comes loaded with a slice of objects selected by the List view. If no
 //objects match the passed in query, the slice will be nil.
 type ListContext struct {
-	IndexContext
+	BaseContext
 	Collection string
 	Columns    []string
 	Values     [][]string
@@ -82,7 +82,7 @@ type ListContext struct {
 //The object always reflects the most recent data in the database.
 //It also comes with a Form that represents the form for the object.
 type UpdateContext struct {
-	IndexContext
+	BaseContext
 	Collection string
 	Object     interface{}
 	Attempted  bool
@@ -95,7 +95,7 @@ type UpdateContext struct {
 //It comes with booleans indicating if the creation was attempted and successful.
 //It also comes with a Form that represents the form for the object.
 type CreateContext struct {
-	IndexContext
+	BaseContext
 	Collection string
 	Attempted  bool
 	Success    bool
@@ -103,16 +103,26 @@ type CreateContext struct {
 	Form       Form
 }
 
-//IndexContext is the type passed in to the Index method. It contains the
+//AuthorizeContext is the type passed in to the Authorize method.
+//It comes with booleans indicating if the authorization request was attempted
+//and sucessful. It also comes with an error string if not sucessful.
+type AuthorizeContext struct {
+	BaseContext
+	Success   bool
+	Attempted bool
+	Error     string
+}
+
+//BaseContext is the type passed in to the Index method. It contains the
 //databases and collections being managed by the admin.
-type IndexContext struct {
+type BaseContext struct {
 	Managed  map[string][]string
 	Reverser Reverser
 }
 
 //Key takes a database and collection and maps it to the key for urls. For
 //example, Key("db", "coll") -> db.coll
-func (i IndexContext) Key(db, coll string) string {
+func (i BaseContext) Key(db, coll string) string {
 	return fmt.Sprintf("%s.%s", db, coll)
 }
 

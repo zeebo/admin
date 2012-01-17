@@ -183,7 +183,7 @@ func (r *defaultRenderer) Delete(w http.ResponseWriter, req *http.Request, c Del
 }
 
 //Index presents an overall view of the database and the managed collections.
-func (r *defaultRenderer) Index(w http.ResponseWriter, req *http.Request, c IndexContext) {
+func (r *defaultRenderer) Index(w http.ResponseWriter, req *http.Request, c BaseContext) {
 	w.Header().Add("Content-Type", "text/html")
 	if err := r.Lookup("index").Execute(w, c); err != nil {
 		panic(err)
@@ -211,6 +211,22 @@ func (r *defaultRenderer) Update(w http.ResponseWriter, req *http.Request, c Upd
 func (r *defaultRenderer) Create(w http.ResponseWriter, req *http.Request, c CreateContext) {
 	w.Header().Add("Content-Type", "text/html")
 	if err := r.Lookup("create").Execute(w, c); err != nil {
+		panic(err)
+	}
+}
+
+//Authorize presents a page with a login form for authorizing a user.
+func (r *defaultRenderer) Authorize(w http.ResponseWriter, req *http.Request, c AuthorizeContext) {
+	w.Header().Add("Content-Type", "text/html")
+	if err := r.Lookup("login").Execute(w, c); err != nil {
+		panic(err)
+	}
+}
+
+//LoggedOut presents a page thanking the user for spending time with the site.
+func (r *defaultRenderer) LoggedOut(w http.ResponseWriter, req *http.Request, c BaseContext) {
+	w.Header().Add("Content-Type", "text/html")
+	if err := r.Lookup("logout").Execute(w, c); err != nil {
 		panic(err)
 	}
 }

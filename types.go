@@ -13,9 +13,8 @@ type Options struct {
 	Columns []string
 }
 
-//loadType loads the cache data for a type. Panics if there are any problems.
+//findIds finds the index locations of the type matching the columns passed in.
 func findIds(typ reflect.Type, columns []string) []int {
-
 	//if columns is nil, do every column!
 	if columns == nil {
 		ids := make([]int, typ.NumField())
@@ -66,7 +65,11 @@ type collectionInfo struct {
 //engine (must be composed of valid types. See Load for discussion on which types
 //are valid.) Panics if it can't find a field with a bson:_id tag.
 func (a *Admin) Register(typ Formable, dbcoll string, opt *Options) {
-	a.initializeCache()
+	if a.types == nil {
+		a.types = make(map[string]collectionInfo)
+		a.object_id = make(map[reflect.Type]int)
+		a.object_coll = make(map[reflect.Type]string)
+	}
 
 	if !strings.Contains(dbcoll, ".") {
 		panic("Database/collection specifier does not contain a .")

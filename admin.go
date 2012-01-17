@@ -1,12 +1,17 @@
 package admin
 
 import (
-	"errors"
 	"launchpad.net/mgo"
 	"net/http"
 	"reflect"
 	"strings"
 )
+
+//useful type because these get made so often
+type d map[string]interface{}
+
+//adminHandler is a type representing a handler function on an *Admin.
+type adminHandler func(*Admin, http.ResponseWriter, *http.Request)
 
 //Admin is an http.Handler for serving up the admin pages
 type Admin struct {
@@ -15,8 +20,10 @@ type Admin struct {
 	Renderer Renderer          //If nil, a default renderer is used to render the admin pages.
 	Routes   map[string]string //Routes lets you change the url paths. If nil, uses DefaultRoutes.
 	Prefix   string            //The path the admin is mounted to in the handler.
+	Key      []byte            //Key for cryptographically signing cookies. Generated if nil.
 
 	//created on demand
+	initd       bool
 	server      *http.ServeMux
 	types       map[string]collectionInfo
 	index_cache map[string][]string
@@ -35,12 +42,6 @@ var DefaultRoutes = map[string]string{
 	"auth":   "/auth/",
 }
 
-//useful type because these get made so often
-type d map[string]interface{}
-
-//adminHandler is a type representing a handler function on an *Admin.
-type adminHandler func(*Admin, http.ResponseWriter, *http.Request)
-
 //routes defines the mapping of type to function for the admin
 var routes = map[string]adminHandler{
 	"index":  (*Admin).index,
@@ -52,25 +53,15 @@ var routes = map[string]adminHandler{
 	"auth":   (*Admin).auth,
 }
 
-//initializeCache makes values in the admin for caching lookups if they don't yet
-//exist.
-func (a *Admin) initializeCache() {
-	if a.types == nil {
-		a.types = make(map[string]collectionInfo)
+func (a *Admin) Init() *Admin {
+	//ensure a valid database
+	if a.Session == nil {
+		panic("Mongo session not configured")
 	}
-	if a.object_id == nil {
-		a.object_id = make(map[reflect.Type]int)
-	}
-	if a.object_coll == nil {
-		a.object_coll = make(map[reflect.Type]string)
-	}
-}
 
-//generateMux creates the internal http.ServeMux to dispatch reqeusts to the
-//appropriate handler.
-func (a *Admin) generateMux() {
-	if a.server != nil {
-		return
+	//make defaults
+	if a.Renderer == nil {
+		a.Renderer = newDefaultRenderer()
 	}
 	if a.Routes == nil {
 		a.Routes = DefaultRoutes
@@ -83,24 +74,21 @@ func (a *Admin) generateMux() {
 		}
 	}
 
+	a.generateMux()
+	a.generateIndexCache()
+
+	a.initd = true
+
+	return a
+}
+
+//generateMux creates the internal http.ServeMux to dispatch reqeusts to the
+//appropriate handler.
+func (a *Admin) generateMux() {
 	a.server = http.NewServeMux()
 	for key, path := range a.Routes {
 		r, fn := path, routes[key]
 		a.server.Handle(r, http.StripPrefix(r, a.bind(fn)))
-	}
-}
-
-//generateIndexCache generates the values needed for IndexContext and stores
-//them for efficient lookup.
-func (a *Admin) generateIndexCache() {
-	if a.index_cache != nil {
-		return
-	}
-
-	a.index_cache = make(map[string][]string)
-	for key := range a.types {
-		pieces := strings.Split(key, ".")
-		a.index_cache[pieces[0]] = append(a.index_cache[pieces[0]], pieces[1])
 	}
 }
 
@@ -112,6 +100,16 @@ func (a *Admin) bind(fn adminHandler) http.HandlerFunc {
 	}
 }
 
+//generateIndexCache generates the values needed for IndexContext and stores
+//them for efficient lookup.
+func (a *Admin) generateIndexCache() {
+	a.index_cache = make(map[string][]string)
+	for key := range a.types {
+		pieces := strings.Split(key, ".")
+		a.index_cache[pieces[0]] = append(a.index_cache[pieces[0]], pieces[1])
+	}
+}
+
 //collFor returns the mgo.Collection for the specified database.collection.
 func (a *Admin) collFor(dbcoll string) mgo.Collection {
 	pieces := strings.Split(dbcoll, ".")
@@ -120,22 +118,14 @@ func (a *Admin) collFor(dbcoll string) mgo.Collection {
 
 //ServeHTTP lets *Admin conform to the http.Handler interface for use in web servers.
 func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if a.Renderer == nil {
-		a.Renderer = newDefaultRenderer()
+	if !a.initd {
+		panic("Admin served without calling Init first.")
 	}
 
-	//TODO: use the authorizer
-
-	//ensure a valid database
-	if a.Session == nil {
-		a.Renderer.InternalError(w, req, errors.New("Mongo session not configured"))
-		return
-	}
+	//TODO: authorization
 
 	//strip off the prefix
 	req.URL.Path = req.URL.Path[len(a.Prefix):]
 
-	//pass it off to our internal muxer
-	a.generateMux()
 	a.server.ServeHTTP(w, req)
 }

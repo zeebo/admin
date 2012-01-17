@@ -54,7 +54,7 @@ func (r *TestRenderer) Delete(w http.ResponseWriter, req *http.Request, c Delete
 	})
 }
 
-func (r *TestRenderer) Index(w http.ResponseWriter, req *http.Request, c IndexContext) {
+func (r *TestRenderer) Index(w http.ResponseWriter, req *http.Request, c BaseContext) {
 	r.Calls = append(r.Calls, TestCall{
 		Type:   "Index",
 		Params: c,
@@ -78,6 +78,20 @@ func (r *TestRenderer) Update(w http.ResponseWriter, req *http.Request, c Update
 func (r *TestRenderer) Create(w http.ResponseWriter, req *http.Request, c CreateContext) {
 	r.Calls = append(r.Calls, TestCall{
 		Type:   "Create",
+		Params: c,
+	})
+}
+
+func (r *TestRenderer) Authorize(w http.ResponseWriter, req *http.Request, c AuthorizeContext) {
+	r.Calls = append(r.Calls, TestCall{
+		Type:   "Authorize",
+		Params: c,
+	})
+}
+
+func (r *TestRenderer) LoggedOut(w http.ResponseWriter, req *http.Request, c BaseContext) {
+	r.Calls = append(r.Calls, TestCall{
+		Type:   "LoggedOut",
 		Params: c,
 	})
 }

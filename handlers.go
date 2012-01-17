@@ -24,16 +24,26 @@ func parseRequest(p string) (coll, id string) {
 	return
 }
 
-func (a *Admin) indexContext() IndexContext {
+func (a *Admin) baseContext() BaseContext {
 	a.generateIndexCache()
-	return IndexContext{
+	return BaseContext{
 		Managed:  a.index_cache,
 		Reverser: Reverser{a},
 	}
 }
 
 func (a *Admin) auth(w http.ResponseWriter, req *http.Request) {
+	action, n := parseRequest(req.URL.Path)
 
+	//ensure that we have an action and nothing else
+	if action == "" || n != "" {
+		a.Renderer.NotFound(w, req)
+		return
+	}
+
+	if action == "logout" {
+
+	}
 }
 
 //Presents the detail view for an object in a collection
@@ -72,9 +82,9 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.Detail(w, req, DetailContext{
-		IndexContext: a.indexContext(),
-		Collection:   coll,
-		Object:       t,
+		BaseContext: a.baseContext(),
+		Collection:  coll,
+		Object:      t,
 		Form: Form{
 			template: a.types[coll].Template,
 			context:  ctx,
@@ -131,12 +141,12 @@ func (a *Admin) delete(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.Delete(w, req, DeleteContext{
-		IndexContext: a.indexContext(),
-		Collection:   coll,
-		Object:       t,
-		Attempted:    attempted,
-		Success:      success,
-		Error:        err,
+		BaseContext: a.baseContext(),
+		Collection:  coll,
+		Object:      t,
+		Attempted:   attempted,
+		Success:     success,
+		Error:       err,
 		Form: Form{
 			template: a.types[coll].Template,
 			context:  ctx,
@@ -154,7 +164,7 @@ func (a *Admin) index(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	a.Renderer.Index(w, req, a.indexContext())
+	a.Renderer.Index(w, req, a.baseContext())
 }
 
 //Presents a list of objects in a collection matching filtering/sorting criteria
@@ -242,11 +252,11 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.List(w, req, ListContext{
-		IndexContext: a.indexContext(),
-		Collection:   coll,
-		Columns:      columns,
-		Values:       values,
-		Objects:      items,
+		BaseContext: a.baseContext(),
+		Collection:  coll,
+		Columns:     columns,
+		Values:      values,
+		Objects:     items,
 		Pagination: Pagination{
 			Pages:       pages,
 			CurrentPage: page,
@@ -317,12 +327,12 @@ render:
 	}
 
 	a.Renderer.Update(w, req, UpdateContext{
-		IndexContext: a.indexContext(),
-		Collection:   coll,
-		Object:       t,
-		Attempted:    attempted,
-		Success:      success,
-		Form:         form,
+		BaseContext: a.baseContext(),
+		Collection:  coll,
+		Object:      t,
+		Attempted:   attempted,
+		Success:     success,
+		Form:        form,
 	})
 }
 
@@ -397,11 +407,11 @@ render:
 	}
 
 	a.Renderer.Create(w, req, CreateContext{
-		IndexContext: a.indexContext(),
-		Collection:   coll,
-		Attempted:    attempted,
-		Success:      success,
-		Form:         form,
+		BaseContext: a.baseContext(),
+		Collection:  coll,
+		Attempted:   attempted,
+		Success:     success,
+		Form:        form,
 	})
 }
 

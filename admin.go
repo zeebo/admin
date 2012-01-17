@@ -32,6 +32,7 @@ var DefaultRoutes = map[string]string{
 	"create": "/create/",
 	"detail": "/detail/",
 	"delete": "/delete/",
+	"auth":   "/auth/",
 }
 
 //useful type because these get made so often
@@ -48,6 +49,7 @@ var routes = map[string]adminHandler{
 	"create": (*Admin).create,
 	"detail": (*Admin).detail,
 	"delete": (*Admin).delete,
+	"auth":   (*Admin).auth,
 }
 
 //initializeCache makes values in the admin for caching lookups if they don't yet
@@ -74,7 +76,7 @@ func (a *Admin) generateMux() {
 		a.Routes = DefaultRoutes
 	}
 
-	required := []string{"index", "list", "update", "create", "detail", "delete"}
+	required := []string{"index", "list", "update", "create", "detail", "delete", "auth"}
 	for _, r := range required {
 		if _, ex := a.Routes[r]; !ex {
 			panic("Route missing: " + r)

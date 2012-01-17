@@ -75,6 +75,7 @@ func TestReverseCustomObj(t *testing.T) {
 			"list":   "/3/",
 			"delete": "/4/",
 			"update": "/5/",
+			"auth":   "/6/",
 			"index":  "/",
 		},
 	}
@@ -133,6 +134,7 @@ func TestReverseCustomSpecified(t *testing.T) {
 			"list":   "/3/",
 			"delete": "/4/",
 			"update": "/5/",
+			"auth":   "/6/",
 			"index":  "/",
 		},
 	}

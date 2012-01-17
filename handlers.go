@@ -32,6 +32,10 @@ func (a *Admin) indexContext() IndexContext {
 	}
 }
 
+func (a *Admin) auth(w http.ResponseWriter, req *http.Request) {
+
+}
+
 //Presents the detail view for an object in a collection
 func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 	coll, id := parseRequest(req.URL.Path)

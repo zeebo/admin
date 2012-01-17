@@ -144,6 +144,7 @@ func TestAdminCustomPaths(t *testing.T) {
 			"create": "/4/",
 			"detail": "/5/",
 			"delete": "/6/",
+			"auth":   "/7/",
 		},
 		Session:  session,
 		Renderer: r,

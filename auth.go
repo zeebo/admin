@@ -9,6 +9,7 @@ type Authorizer interface {
 type AuthResponse struct {
 	Passed   bool
 	Username string
+	Key      interface{}
 }
 
 type AuthFunc func(*http.Request) AuthResponse

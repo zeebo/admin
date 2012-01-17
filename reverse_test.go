@@ -9,6 +9,7 @@ func TestReverseIdFor(t *testing.T) {
 	h := &Admin{}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
+	h.Init()
 
 	var x T = T{bson.ObjectIdHex("ffffffffffffffffffffffff")}
 
@@ -25,6 +26,7 @@ func TestReverseCollFor(t *testing.T) {
 	h := &Admin{}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
+	h.Init()
 
 	if c := r.collFor(T{}); c != "admin_test.T" {
 		t.Fatalf("Expected %q. Got %q.", "admin_test.T", c)
@@ -47,7 +49,8 @@ func TestReverseDefaultObj(t *testing.T) {
 	h := &Admin{}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
-	h.generateMux()
+	h.Init()
+
 	var x T = T{bson.ObjectIdHex("ffffffffffffffffffffffff")}
 
 	if c, e := r.CreateObj(x), "/create/admin_test.T"; c != e {
@@ -81,7 +84,8 @@ func TestReverseCustomObj(t *testing.T) {
 	}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
-	h.generateMux()
+	h.Init()
+
 	var x T = T{bson.ObjectIdHex("ffffffffffffffffffffffff")}
 
 	if c, e := r.CreateObj(x), "/1/admin_test.T"; c != e {
@@ -107,7 +111,7 @@ func TestReverseDefaultSpecified(t *testing.T) {
 	coll, id := "admin_test.T", "ffffffffffffffffffffffff"
 
 	h.Register(T{}, coll, nil)
-	h.generateMux()
+	h.Init()
 
 	if c, e := r.Create(coll), "/create/admin_test.T"; c != e {
 		t.Fatalf("Expected %q. Got %q.", e, c)
@@ -141,7 +145,7 @@ func TestReverseCustomSpecified(t *testing.T) {
 	r := Reverser{h}
 	coll, id := "admin_test.T", "ffffffffffffffffffffffff"
 	h.Register(T{}, coll, nil)
-	h.generateMux()
+	h.Init()
 
 	if c, e := r.Create(coll), "/1/admin_test.T"; c != e {
 		t.Fatalf("Expected %q. Got %q.", e, c)

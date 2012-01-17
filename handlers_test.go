@@ -12,6 +12,7 @@ func TestDetailInvalid(t *testing.T) {
 		Session:  session,
 		Renderer: &TestRenderer{},
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/detail/")
@@ -35,6 +36,7 @@ func TestDeleteInvalid(t *testing.T) {
 		Session:  session,
 		Renderer: &TestRenderer{},
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/delete/")
@@ -58,6 +60,7 @@ func TestIndexInvalid(t *testing.T) {
 		Session:  session,
 		Renderer: &TestRenderer{},
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/foobar")
@@ -72,6 +75,7 @@ func TestListInvalid(t *testing.T) {
 		Renderer: &TestRenderer{},
 	}
 	h.Register(&T{}, "admin_test.T", nil)
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/list/")
@@ -90,6 +94,7 @@ func TestUpdateInvalid(t *testing.T) {
 		Session:  session,
 		Renderer: &TestRenderer{},
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/update/")
@@ -113,6 +118,7 @@ func TestCreateInvalid(t *testing.T) {
 		Session:  session,
 		Renderer: &TestRenderer{},
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/create/")
@@ -127,6 +133,7 @@ func TestIndexCorrectRender(t *testing.T) {
 		Session:  session,
 		Renderer: r,
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/")
@@ -145,6 +152,7 @@ func TestListCorrectRender(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T{}, "admin_test.T", nil)
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/list/admin_test.T/")
@@ -163,6 +171,7 @@ func TestUpdateCorrectRender(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T{}, "admin_test.T", nil)
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/update/admin_test.T/4f07c34779bf562daff8640c")
@@ -191,6 +200,7 @@ func TestCreateCorrectRender(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T{}, "admin_test.T", nil)
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/create/admin_test.T/")
@@ -209,6 +219,7 @@ func TestDetailCorrectRender(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T{}, "admin_test.T", nil)
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/detail/admin_test.T/4f07c34779bf562daff8640c")
@@ -237,6 +248,7 @@ func TestDeleteCorrectRender(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T{}, "admin_test.T", nil)
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/delete/admin_test.T/4f07c34779bf562daff8640c")
@@ -264,6 +276,7 @@ func TestUpdateUnknownCollection(t *testing.T) {
 		Session:  session,
 		Renderer: r,
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/update/unknown.T/4f07c34779bf562daff8640c")
@@ -281,6 +294,7 @@ func TestDetailUnknownCollection(t *testing.T) {
 		Session:  session,
 		Renderer: r,
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/detail/unknown.T/4f07c34779bf562daff8640c")
@@ -298,6 +312,7 @@ func TestDeleteUnknownCollection(t *testing.T) {
 		Session:  session,
 		Renderer: r,
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/delete/unknown.T/4f07c34779bf562daff8640c")
@@ -315,6 +330,7 @@ func TestListUnknownCollection(t *testing.T) {
 		Session:  session,
 		Renderer: r,
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/list/unknown.T/")
@@ -332,6 +348,7 @@ func TestCreateUnknownCollection(t *testing.T) {
 		Session:  session,
 		Renderer: r,
 	}
+	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/create/unknown.T/")
@@ -350,6 +367,7 @@ func TestListReturns(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T2{}, "admin_test.T2", nil)
+	h.Init()
 
 	Get(t, h, "/list/admin_test.T2/")
 	context := r.Last().Params.(ListContext)
@@ -367,6 +385,7 @@ func TestListNumPage(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T2{}, "admin_test.T2", nil)
+	h.Init()
 
 	test := func(page, numpage int) {
 		Get(t, h, fmt.Sprintf("/list/admin_test.T2/?page=%d&numpage=%d", page, numpage))
@@ -397,6 +416,7 @@ func TestListInvalidParams(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T2{}, "admin_test.T2", nil)
+	h.Init()
 
 	//default to page 1
 	Get(t, h, "/list/admin_test.T2/?page=-1")
@@ -422,6 +442,7 @@ func TestListSortingOrder(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T2{}, "admin_test.T2", nil)
+	h.Init()
 
 	Get(t, h, "/list/admin_test.T2/?sort_v=desc")
 	context := r.Last().Params.(ListContext)
@@ -463,6 +484,7 @@ func TestListSortingInvalid(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T2{}, "admin_test.T2", nil)
+	h.Init()
 
 	Get(t, h, "/list/admin_test.T2/?sort_no_field=desc")
 	context := r.Last().Params.(ListContext)
@@ -479,6 +501,7 @@ func TestDetailLoaderCalled(t *testing.T) {
 		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
+	h.Init()
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -504,6 +527,7 @@ func TestDeleteLoaderCalled(t *testing.T) {
 		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
+	h.Init()
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -529,6 +553,7 @@ func TestUpdateLoaderCalled(t *testing.T) {
 		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
+	h.Init()
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -555,6 +580,7 @@ func TestCreateLoaderCalled(t *testing.T) {
 		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
+	h.Init()
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -581,6 +607,8 @@ func TestCreateUsesEmptyValues(t *testing.T) {
 		Renderer: &TestRenderer{},
 	}
 	h.Register(T5{}, "admin_test.T5", nil)
+	h.Init()
+
 	//empty should cause no panic
 	Get(t, h, "/create/admin_test.T5/")
 }

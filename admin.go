@@ -2,6 +2,7 @@ package admin
 
 import (
 	"crypto/rand"
+	"github.com/zeebo/sign"
 	"io"
 	"launchpad.net/mgo"
 	"log"
@@ -34,6 +35,7 @@ type Admin struct {
 	index_cache map[string][]string
 	object_id   map[reflect.Type]int
 	object_coll map[reflect.Type]string
+	auth_cache  map[*http.Request]AuthSession
 	logger      *log.Logger
 }
 
@@ -91,6 +93,8 @@ func (a *Admin) Init() {
 	a.generateMux()
 	a.generateIndexCache()
 
+	a.auth_cache = make(map[*http.Request]AuthSession)
+
 	a.initd = true
 }
 
@@ -146,10 +150,43 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		panic("Admin served without calling Init first.")
 	}
 
-	//TODO: authorization
-
 	//strip off the prefix
 	req.URL.Path = req.URL.Path[len(a.Prefix):]
+
+	//if they're going to the auth handler, let them through
+	if a.Auth == nil || strings.HasPrefix(req.URL.Path, a.Routes["auth"]) {
+		a.server.ServeHTTP(w, req)
+		return
+	}
+
+	//set up a redirect function to handle adding the redirect cookie
+	//and sending them to the login handler
+	redirect := func() {
+		reverser := Reverser{a}
+		http.SetCookie(w, &http.Cookie{
+			Name:  "redirect",
+			Value: req.URL.Path,
+		})
+		http.Redirect(w, req, reverser.Login(), http.StatusTemporaryRedirect)
+	}
+
+	signer := sign.Signer{a.Key}
+	var session AuthSession
+
+	cook, err := req.Cookie("auth")
+	if err != nil {
+		redirect()
+		return
+	}
+
+	if err := signer.Unsign(cook.Value, &session, 0); err != nil {
+		redirect()
+		return
+	}
+
+	//store the auth session into our cache
+	a.auth_cache[req] = session
+	defer delete(a.auth_cache, req)
 
 	a.server.ServeHTTP(w, req)
 }

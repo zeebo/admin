@@ -118,6 +118,7 @@ type AuthorizeContext struct {
 type BaseContext struct {
 	Managed  map[string][]string
 	Reverser Reverser
+	Auth     AuthSession
 }
 
 //Key takes a database and collection and maps it to the key for urls. For

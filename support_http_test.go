@@ -40,10 +40,6 @@ func NewTestResponseWriter() *TestResponseWriter {
 	}
 }
 
-type fatalf interface {
-	Fatalf(string, ...interface{})
-}
-
 func Request(h http.Handler, method string, url, bodyType string, body io.Reader) (*TestResponseWriter, error) {
 	w := NewTestResponseWriter()
 	r, err := http.NewRequest(method, url, body)
@@ -56,6 +52,10 @@ func Request(h http.Handler, method string, url, bodyType string, body io.Reader
 	h.ServeHTTP(w, r)
 	w.Cleanup()
 	return w, nil
+}
+
+type fatalf interface {
+	Fatalf(string, ...interface{})
 }
 
 func Get(t fatalf, h http.Handler, url string) *TestResponseWriter {
@@ -77,4 +77,12 @@ func Post(t fatalf, h http.Handler, url string, data url.Values) *TestResponseWr
 	}
 
 	return w
+}
+
+type TestAuth struct {
+	Response AuthResponse
+}
+
+func (t TestAuth) Authorize(req *http.Request) AuthResponse {
+	return t.Response
 }

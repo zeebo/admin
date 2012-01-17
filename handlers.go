@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/zeebo/sign"
 	"launchpad.net/gobson/bson"
 	"math"
 	"net/http"
@@ -24,12 +25,15 @@ func parseRequest(p string) (coll, id string) {
 	return
 }
 
-func (a *Admin) baseContext() BaseContext {
-	a.generateIndexCache()
-	return BaseContext{
-		Managed:  a.index_cache,
-		Reverser: Reverser{a},
+func (a *Admin) baseContext(req *http.Request) (ctx BaseContext) {
+	ctx.Managed = a.index_cache
+	ctx.Reverser = Reverser{a}
+
+	if auth, ex := a.auth_cache[req]; ex {
+		ctx.Auth = auth
 	}
+
+	return
 }
 
 func (a *Admin) auth(w http.ResponseWriter, req *http.Request) {
@@ -41,9 +45,62 @@ func (a *Admin) auth(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if action == "logout" {
+	switch action {
+	case "logout":
+		as := AuthSession{}
+		as.clear(w)
 
+		a.Renderer.LoggedOut(w, req, a.baseContext(req))
+		return
+	case "login":
+		//pass down through the switch
+	default:
+		a.Renderer.NotFound(w, req)
+		return
 	}
+
+	//do the easy case first
+	if req.Method != "POST" {
+		a.Renderer.Authorize(w, req, AuthorizeContext{
+			BaseContext: a.baseContext(req),
+		})
+		return
+	}
+
+	resp := a.Auth.Authorize(req)
+
+	var success bool
+
+	//gotta set the cookie
+	if resp.Passed {
+		as := AuthSession{
+			Username: resp.Username,
+			Key:      resp.Key,
+		}
+		signer := sign.Signer{a.Key}
+
+		if err := as.add(signer, w); err != nil {
+			a.logger.Printf("Error adding auth cookie: %s", err)
+			resp.Error = err.Error()
+			goto render
+		}
+
+		success = true
+		//look up the redirect url
+		if val, err := req.Cookie("redirect"); err == nil {
+			http.Redirect(w, req, val.Value, http.StatusTemporaryRedirect)
+			return
+		}
+	}
+
+render:
+
+	a.Renderer.Authorize(w, req, AuthorizeContext{
+		BaseContext: a.baseContext(req),
+		Attempted:   true,
+		Success:     success,
+		Error:       resp.Error,
+	})
 }
 
 //Presents the detail view for an object in a collection
@@ -82,7 +139,7 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.Detail(w, req, DetailContext{
-		BaseContext: a.baseContext(),
+		BaseContext: a.baseContext(req),
 		Collection:  coll,
 		Object:      t,
 		Form: Form{
@@ -142,7 +199,7 @@ func (a *Admin) delete(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.Delete(w, req, DeleteContext{
-		BaseContext: a.baseContext(),
+		BaseContext: a.baseContext(req),
 		Collection:  coll,
 		Object:      t,
 		Attempted:   attempted,
@@ -166,7 +223,7 @@ func (a *Admin) index(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	a.Renderer.Index(w, req, a.baseContext())
+	a.Renderer.Index(w, req, a.baseContext(req))
 }
 
 //Presents a list of objects in a collection matching filtering/sorting criteria
@@ -254,7 +311,7 @@ func (a *Admin) list(w http.ResponseWriter, req *http.Request) {
 	}
 
 	a.Renderer.List(w, req, ListContext{
-		BaseContext: a.baseContext(),
+		BaseContext: a.baseContext(req),
 		Collection:  coll,
 		Columns:     columns,
 		Values:      values,
@@ -330,7 +387,7 @@ render:
 	}
 
 	a.Renderer.Update(w, req, UpdateContext{
-		BaseContext: a.baseContext(),
+		BaseContext: a.baseContext(req),
 		Collection:  coll,
 		Object:      t,
 		Attempted:   attempted,
@@ -411,7 +468,7 @@ render:
 	}
 
 	a.Renderer.Create(w, req, CreateContext{
-		BaseContext: a.baseContext(),
+		BaseContext: a.baseContext(req),
 		Collection:  coll,
 		Attempted:   attempted,
 		Success:     success,

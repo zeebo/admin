@@ -1,25 +1,29 @@
 package admin
 
 import (
-	//	"github.com/zeebo/sign"
+	"github.com/zeebo/sign"
 	"net/http"
-	"time"
 )
 
-type Signer interface {
-	Sign(interface{}) (string, error)
-	Unsign(string, interface{}, time.Duration) error
-}
-
-type authSession struct {
+type AuthSession struct {
 	Username string
 	Key      interface{}
 }
 
-func (a *authSession) Add(s Signer, w http.ResponseWriter) error {
+func (a *AuthSession) add(s sign.Signer, w http.ResponseWriter) error {
+	data, err := s.Sign(a)
+	if err != nil {
+		return err
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:  "auth",
+		Value: data,
+	})
 	return nil
 }
 
-func (a *authSession) Clear(w http.ResponseWriter) error {
-	return nil
+func (a *AuthSession) clear(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name: "auth",
+	})
 }

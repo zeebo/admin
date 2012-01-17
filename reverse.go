@@ -105,3 +105,11 @@ func (r Reverser) UpdateObj(thing interface{}) string {
 func (r Reverser) Update(coll string, id string) string {
 	return path.Join(r.admin.Prefix, r.admin.Routes["update"], coll, id)
 }
+
+func (r Reverser) Login() string {
+	return path.Join(r.admin.Prefix, r.admin.Routes["auth"], "login")
+}
+
+func (r Reverser) Logout() string {
+	return path.Join(r.admin.Prefix, r.admin.Routes["auth"], "logout")
+}

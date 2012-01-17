@@ -31,6 +31,31 @@ func TestDetailInvalid(t *testing.T) {
 	}
 }
 
+func TestAuthInvalid(t *testing.T) {
+	h := &Admin{
+		Session:  session,
+		Renderer: &TestRenderer{},
+	}
+	h.Init()
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/auth/")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Auth did not 404 without an action. Got %d", w.Status)
+	}
+
+	w = Get(t, h, "/auth/login/foo")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Auth did not 404 with more than action. Got %d", w.Status)
+	}
+
+	w = Get(t, h, "/auth/logout`/foo")
+	if w.Status != http.StatusNotFound {
+		t.Fatalf("Auth did not 404 with more than action. Got %d", w.Status)
+	}
+
+}
+
 func TestDeleteInvalid(t *testing.T) {
 	h := &Admin{
 		Session:  session,
@@ -143,6 +168,43 @@ func TestIndexCorrectRender(t *testing.T) {
 	if r.Last().Type != "Index" {
 		t.Fatalf("Wrong Renderer called. Expected Index got %s", r.Last().Type)
 	}
+}
+
+func TestAuthCorrectRender(t *testing.T) {
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  session,
+		Renderer: r,
+	}
+	h.Init()
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/auth/login")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on auth/login. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Authorize" {
+		t.Fatalf("Wrong Renderer called. Expected Auth got %s", r.Last().Type)
+	}
+}
+
+func TestLogoutCorrectRender(t *testing.T) {
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  session,
+		Renderer: r,
+	}
+	h.Init()
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/auth/logout")
+	if w.Status != http.StatusOK {
+		t.Fatalf("Wrong return type on auth/logout. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "LoggedOut" {
+		t.Fatalf("Wrong Renderer called. Expected LoggedOut got %s", r.Last().Type)
+	}
+
 }
 
 func TestListCorrectRender(t *testing.T) {
@@ -407,7 +469,23 @@ func TestListNumPage(t *testing.T) {
 	}
 }
 
-//TODO: test list columns working correctly
+func TestListColumns(t *testing.T) {
+	r := &TestRenderer{}
+	h := &Admin{
+		Session:  session,
+		Renderer: r,
+	}
+	h.Register(T2{}, "admin_test.T2", &Options{
+		Columns: []string{"V"},
+	})
+	h.Init()
+
+	Get(t, h, "/list/admin_test.T2/")
+	context := r.Last().Params.(ListContext)
+	if len(context.Columns) != 1 || context.Columns[0] != "V" {
+		t.Fatalf("Wrong columns. Expected %v. Got %v", []string{"V"}, context.Columns)
+	}
+}
 
 func TestListInvalidParams(t *testing.T) {
 	r := &TestRenderer{}

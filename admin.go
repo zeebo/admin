@@ -167,7 +167,7 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		reverser := Reverser{a}
 		http.SetCookie(w, &http.Cookie{
 			Name:    "redirect",
-			Value:   req.URL.Path,
+			Value:   a.Prefix + req.URL.Path, //gotta put the prefix back in
 			Path:    "/",
 			Expires: time.Now().AddDate(1, 0, 0),
 		})

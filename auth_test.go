@@ -121,6 +121,28 @@ func TestAuthRedirectAfterLogin(t *testing.T) {
 	}
 }
 
+func TestAuthRedirectHasWithPrefix(t *testing.T) {
+	h := &Admin{
+		Session: session,
+		Auth:    TestAuth{},
+		Prefix:  "/some/prefix",
+	}
+	h.Init()
+	var w *TestResponseWriter
+
+	w = Get(t, h, "/some/prefix/foo/bar")
+	if w.Status != http.StatusTemporaryRedirect {
+		t.Fatalf("Expected %d. Got %d", http.StatusTemporaryRedirect, w.Status)
+	}
+	cookie := w.Headers.Get("Set-Cookie")
+	chunks := strings.SplitN(cookie, "=", 2)
+	data := strings.Split(chunks[1], ";")
+
+	if data[0] != "/some/prefix/foo/bar" {
+		t.Fatalf("Expected %q. Got %q", "/some/prefix/foo/bar", data[0])
+	}
+}
+
 func TestAuthLogout(t *testing.T) {
 	r := &TestRenderer{}
 	h := &Admin{

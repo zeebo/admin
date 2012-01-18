@@ -10,6 +10,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 )
 
 //useful type because these get made so often
@@ -165,8 +166,9 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	redirect := func() {
 		reverser := Reverser{a}
 		http.SetCookie(w, &http.Cookie{
-			Name:  "redirect",
-			Value: req.URL.Path,
+			Name:    "redirect",
+			Value:   req.URL.Path,
+			Expires: time.Date(2100, time.January, 1, 0, 0, 0, 0, time.UTC),
 		})
 		http.Redirect(w, req, reverser.Login(), http.StatusTemporaryRedirect)
 	}

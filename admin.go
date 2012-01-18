@@ -168,7 +168,7 @@ func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.SetCookie(w, &http.Cookie{
 			Name:    "redirect",
 			Value:   req.URL.Path,
-			Expires: time.Date(2100, time.January, 1, 0, 0, 0, 0, time.UTC),
+			Expires: time.Now().AddDate(1, 0, 0),
 		})
 		http.Redirect(w, req, reverser.Login(), http.StatusTemporaryRedirect)
 	}

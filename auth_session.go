@@ -21,7 +21,7 @@ func (a *AuthSession) add(s sign.Signer, w http.ResponseWriter) error {
 	http.SetCookie(w, &http.Cookie{
 		Name:    "auth",
 		Value:   data,
-		Expires: time.Date(2100, time.January, 1, 0, 0, 0, 0, time.UTC),
+		Expires: time.Now().AddDate(1, 0, 0),
 	})
 	return nil
 }

@@ -29,6 +29,8 @@ func (a *AuthSession) add(s sign.Signer, w http.ResponseWriter) error {
 
 func (a *AuthSession) clear(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
-		Name: "auth",
+		Name:    "auth",
+		Path:    "/",
+		Expires: time.Now(),
 	})
 }

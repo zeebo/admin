@@ -160,8 +160,8 @@ func TestAuthLogout(t *testing.T) {
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/auth/logout")
-	if cookie := w.Headers.Get("Set-Cookie"); cookie != "auth=" {
-		t.Fatalf("Expected %q. Got %q", "auth=", cookie)
+	if cookie := w.Headers.Get("Set-Cookie"); !strings.HasPrefix(cookie, "auth=;") {
+		t.Fatalf("Expected %q. Got %q", "auth=;*", cookie)
 	}
 }
 

@@ -88,7 +88,7 @@ func (a *Admin) auth(w http.ResponseWriter, req *http.Request) {
 		success = true
 		//look up the redirect url
 		if val, err := req.Cookie("redirect"); err == nil {
-			http.Redirect(w, req, val.Value, http.StatusTemporaryRedirect)
+			http.Redirect(w, req, val.Value, http.StatusMovedPermanently)
 			return
 		}
 	}

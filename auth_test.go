@@ -113,8 +113,8 @@ func TestAuthRedirectAfterLogin(t *testing.T) {
 	h.ServeHTTP(w, req)
 	w.Cleanup()
 
-	if w.Status != http.StatusTemporaryRedirect {
-		t.Fatalf("Expected %d. Got %d", http.StatusTemporaryRedirect, w.Status)
+	if w.Status != http.StatusMovedPermanently {
+		t.Fatalf("Expected %d. Got %d", http.StatusMovedPermanently, w.Status)
 	}
 	if redir := w.Headers.Get("Location"); redir != "/foo/bar" {
 		t.Fatalf("Expected %q. Got %q", "/foo/bar", redir)

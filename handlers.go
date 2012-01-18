@@ -30,7 +30,7 @@ func (a *Admin) baseContext(req *http.Request) (ctx BaseContext) {
 	ctx.Reverser = Reverser{a}
 
 	if auth, ex := a.auth_cache[req]; ex {
-		ctx.Auth = auth
+		ctx.Auth = &auth
 	}
 
 	return

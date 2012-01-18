@@ -25,9 +25,9 @@ type Renderer interface {
 	//These functions present the user some html with the appropriate context
 	//data.
 	//
-	//In the case of Update and Create, these handlers must handle the case
-	//of an error in processing the form. Relevant details will be in the 
-	//passed in context.
+	//In the case of Update, Create and Authorize, these handlers must handle
+	//the case of an error in processing the form. Relevant details will be in
+	//the  passed in context.
 	Detail(http.ResponseWriter, *http.Request, DetailContext)
 	Delete(http.ResponseWriter, *http.Request, DeleteContext)
 	Index(http.ResponseWriter, *http.Request, BaseContext)
@@ -113,12 +113,13 @@ type AuthorizeContext struct {
 	Error     string
 }
 
-//BaseContext is the type passed in to the Index method. It contains the
-//databases and collections being managed by the admin.
+//BaseContext is the type passed in to every Render method. It contains the
+//databases and collections being managed by the admin and information regarding
+//the logged in user.
 type BaseContext struct {
 	Managed  map[string][]string
 	Reverser Reverser
-	Auth     AuthSession
+	Auth     *AuthSession
 }
 
 //Key takes a database and collection and maps it to the key for urls. For

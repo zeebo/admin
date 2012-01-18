@@ -81,7 +81,8 @@ func (p Pagination) PageList(n int) []int {
 	return ints
 }
 
-//IsCurrent helps you determine if a given page number is the current page.
+//IsCurrent helps you determine if a given page number is the current page in
+//templates.
 func (p Pagination) IsCurrent(page int) bool {
 	return page == p.CurrentPage
 }

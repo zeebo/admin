@@ -61,6 +61,7 @@ var routes = map[string]adminHandler{
 	"auth":   (*Admin).auth,
 }
 
+//Init must be called before ServeHTTP is called or ServeHTTP will panic.
 func (a *Admin) Init() {
 	//ensure a valid database
 	if a.Session == nil {

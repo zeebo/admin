@@ -118,19 +118,6 @@ found:
 	a.types[dbcoll] = collectionInfo{t, templ, ids}
 }
 
-//Unregisters the information for the colleciton. Panics if you attempt to unregister
-//a collection not yet registered.
-func (a *Admin) Unregister(dbcoll string) {
-	if a.types == nil {
-		a.types = make(map[string]collectionInfo)
-	}
-
-	if _, ok := a.types[dbcoll]; !ok {
-		panic(fmt.Sprintf("unregister db.collection that does not exist: %q", dbcoll))
-	}
-	delete(a.types, dbcoll)
-}
-
 //hasType returns if the database/collection pair has been registered.
 func (a *Admin) hasType(dbcoll string) (ok bool) {
 	if a.types == nil {

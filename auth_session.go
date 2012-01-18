@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+//AuthSession is passed in as part of the BaseContext to every Renderer if the
+//request is authorized.
 type AuthSession struct {
 	Username string
 	Key      interface{}

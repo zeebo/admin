@@ -18,19 +18,12 @@ func ExampleAdmin_ServeHTTP() {
 		Session: session,
 	}
 	a.Register(T{}, "my_database.T", nil)
+	a.Init()
 
 	http.Handle("/admin/", a)
 	if err := http.ListenAndServe(":11223", nil); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func ExampleAdmin_Unregister() {
-	a := &Admin{
-		Session: session,
-	}
-	a.Register(T{}, "my_database.T", nil)
-	a.Unregister("my_database.T")
 }
 
 func ExampleAdmin() {
@@ -49,14 +42,18 @@ func ExampleAdmin() {
 			"create": "/4/",
 			"detail": "/5/",
 			"delete": "/6/",
+			"auth":   "/7/",
 		},
+		Prefix: "/admin",
 	}
 
 	a.Register(T{}, "database.collection", &Options{
 		Columns: []string{"First", "Second", "Fifth"},
 	})
 
-	http.Handle("/admin/", http.StripPrefix("/admin/", a))
+	a.Init()
+
+	http.Handle("/admin/", a)
 	if err := http.ListenAndServe(":11223", nil); err != nil {
 		log.Fatal(err)
 	}

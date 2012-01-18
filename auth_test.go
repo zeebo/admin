@@ -60,6 +60,8 @@ func TestAuthLogin(t *testing.T) {
 	}
 
 	chunks := strings.SplitN(cookie, "=", 2)
+	data := strings.Split(chunks[1], ";")
+
 	//have to make a request
 	w = NewTestResponseWriter()
 	req, err := http.NewRequest("GET", "/", nil)
@@ -68,7 +70,7 @@ func TestAuthLogin(t *testing.T) {
 	}
 	req.AddCookie(&http.Cookie{
 		Name:  "auth",
-		Value: chunks[1],
+		Value: data[0],
 	})
 
 	h.ServeHTTP(w, req)

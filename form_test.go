@@ -155,7 +155,7 @@ func TestUnflatten(t *testing.T) {
 	for _, c := range table {
 		ret := unflatten(c.data, "")
 		if !compare(ret, c.expected) {
-			t.Fatalf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
+			t.Errorf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
 		}
 	}
 }
@@ -266,10 +266,10 @@ func TestErrors(t *testing.T) {
 	for _, c := range table {
 		val, err := Load(c.data, &x)
 		if err != nil {
-			t.Fatalf("Error while loading %v:\n%s", c.data, err)
+			t.Errorf("Error while loading %v:\n%s", c.data, err)
 		}
 		if !compareErrs(val, c.errs) {
-			t.Fatalf("Errors did not agree.\nExpected: %v\nGot %v", c.errs, val)
+			t.Errorf("Errors did not agree.\nExpected: %v\nGot %v", c.errs, val)
 		}
 	}
 }
@@ -303,39 +303,39 @@ func TestLoadInvalidTypes(t *testing.T) {
 	)
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x1); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x1)
+		t.Errorf("Error. Allowed loading into a %T", x1)
 	}
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x2); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x2)
+		t.Errorf("Error. Allowed loading into a %T", x2)
 	}
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x3); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x3)
+		t.Errorf("Error. Allowed loading into a %T", x3)
 	}
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x4); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x4)
+		t.Errorf("Error. Allowed loading into a %T", x4)
 	}
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x5); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x5)
+		t.Errorf("Error. Allowed loading into a %T", x5)
 	}
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x6); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x6)
+		t.Errorf("Error. Allowed loading into a %T", x6)
 	}
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x7); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x7)
+		t.Errorf("Error. Allowed loading into a %T", x7)
 	}
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x8); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x8)
+		t.Errorf("Error. Allowed loading into a %T", x8)
 	}
 
 	if _, err := Load(url.Values{"X": {"data"}}, &x9); err == nil {
-		t.Fatalf("Error. Allowed loading into a %T", x9)
+		t.Errorf("Error. Allowed loading into a %T", x9)
 	}
 }
 
@@ -483,11 +483,11 @@ func TestCreateValuesValid(t *testing.T) {
 	for _, c := range table {
 		ret, err := CreateValues(c.data)
 		if err != nil {
-			t.Fatalf("Error processing: %s\n%s", err, c.data)
+			t.Errorf("Error processing: %s\n%s", err, c.data)
 		}
 
 		if !compareString(ret, c.expected) {
-			t.Fatalf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
+			t.Errorf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
 		}
 	}
 }
@@ -530,11 +530,11 @@ func TestCreateEmptyValuesValid(t *testing.T) {
 	for _, c := range table {
 		ret, err := CreateEmptyValues(c.data)
 		if err != nil {
-			t.Fatalf("Error processing: %s\n%s", err, c.data)
+			t.Errorf("Error processing: %s\n%s", err, c.data)
 		}
 
 		if !compareString(ret, c.expected) {
-			t.Fatalf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
+			t.Errorf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
 		}
 	}
 }
@@ -553,39 +553,39 @@ func TestCreateEmptyValuesInvalidTypes(t *testing.T) {
 	)
 
 	if _, err := CreateEmptyValues(x1); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x1)
+		t.Errorf("Error. Creating an empty value with a %T", x1)
 	}
 
 	if _, err := CreateEmptyValues(x2); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x2)
+		t.Errorf("Error. Creating an empty value with a %T", x2)
 	}
 
 	if _, err := CreateEmptyValues(x3); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x3)
+		t.Errorf("Error. Creating an empty value with a %T", x3)
 	}
 
 	if _, err := CreateEmptyValues(x4); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x4)
+		t.Errorf("Error. Creating an empty value with a %T", x4)
 	}
 
 	if _, err := CreateEmptyValues(x5); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x5)
+		t.Errorf("Error. Creating an empty value with a %T", x5)
 	}
 
 	if _, err := CreateEmptyValues(x6); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x6)
+		t.Errorf("Error. Creating an empty value with a %T", x6)
 	}
 
 	if _, err := CreateEmptyValues(x7); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x7)
+		t.Errorf("Error. Creating an empty value with a %T", x7)
 	}
 
 	if _, err := CreateEmptyValues(x8); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x8)
+		t.Errorf("Error. Creating an empty value with a %T", x8)
 	}
 
 	if _, err := CreateEmptyValues(x9); err == nil {
-		t.Fatalf("Error. Creating an empty value with a %T", x9)
+		t.Errorf("Error. Creating an empty value with a %T", x9)
 	}
 }
 

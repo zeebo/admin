@@ -26,11 +26,11 @@ func TestPagination(t *testing.T) {
 	for _, c := range table {
 		r := p.PageList(c.given)
 		if len(r) != len(c.expected) {
-			t.Fatalf("Expected %v. Got %v.", c.expected, r)
+			t.Errorf("Expected %v. Got %v.", c.expected, r)
 		}
 		for i, n := range r {
 			if n != c.expected[i] {
-				t.Fatalf("Expected %v. Got %v.", c.expected, r)
+				t.Errorf("Expected %v. Got %v.", c.expected, r)
 			}
 		}
 	}
@@ -47,11 +47,11 @@ func TestPaginationPage(t *testing.T) {
 		data := p.Page(i)[1:] //strip off ?
 		v, err := url.ParseQuery(data)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 		if v["numpage"][0] != "20" || v["sort__id"][0] != "asc" ||
 			v["page"][0] != fmt.Sprint(i) {
-			t.Fatalf("Expected %v + page.\nGot %v.", base_values, v)
+			t.Errorf("Expected %v + page.\nGot %v.", base_values, v)
 		}
 	}
 }

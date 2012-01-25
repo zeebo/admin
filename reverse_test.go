@@ -54,19 +54,19 @@ func TestReverseDefaultObj(t *testing.T) {
 	var x T = T{bson.ObjectIdHex("ffffffffffffffffffffffff")}
 
 	if c, e := r.CreateObj(x), "/create/admin_test.T"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.DetailObj(x), "/detail/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.ListObj(x), "/list/admin_test.T"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.DeleteObj(x), "/delete/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.UpdateObj(x), "/update/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 }
 
@@ -90,19 +90,19 @@ func TestReverseCustomObj(t *testing.T) {
 	var x T = T{bson.ObjectIdHex("ffffffffffffffffffffffff")}
 
 	if c, e := r.CreateObj(x), "/1/admin_test.T"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.DetailObj(x), "/2/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.ListObj(x), "/3/admin_test.T"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.DeleteObj(x), "/4/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.UpdateObj(x), "/5/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 }
 
@@ -115,19 +115,19 @@ func TestReverseDefaultSpecified(t *testing.T) {
 	h.Init()
 
 	if c, e := r.Create(coll), "/create/admin_test.T"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.Detail(coll, id), "/detail/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.List(coll), "/list/admin_test.T"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.Delete(coll, id), "/delete/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.Update(coll, id), "/update/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 }
 
@@ -150,18 +150,18 @@ func TestReverseCustomSpecified(t *testing.T) {
 	h.Init()
 
 	if c, e := r.Create(coll), "/1/admin_test.T"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.Detail(coll, id), "/2/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.List(coll), "/3/admin_test.T"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.Delete(coll, id), "/4/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 	if c, e := r.Update(coll, id), "/5/admin_test.T/ffffffffffffffffffffffff"; c != e {
-		t.Fatalf("Expected %q. Got %q.", e, c)
+		t.Errorf("Expected %q. Got %q.", e, c)
 	}
 }

@@ -155,51 +155,60 @@ func TestAdminCustomPaths(t *testing.T) {
 
 	w = Get(t, h, "/1/")
 	if w.Status != http.StatusOK {
-		t.Fatalf("Wrong return type on Index. Expected 200 got %d", w.Status)
+		t.Errorf("Wrong return type on Index. Expected 200 got %d", w.Status)
 	}
 	if r.Last().Type != "Index" {
-		t.Fatalf("Wrong Renderer called. Expected Index got %s", r.Last().Type)
+		t.Errorf("Wrong Renderer called. Expected Index got %s", r.Last().Type)
 	}
 
 	w = Get(t, h, "/2/admin_test.T/")
 	if w.Status != http.StatusOK {
-		t.Fatalf("Wrong return type on List. Expected 200 got %d", w.Status)
+		t.Errorf("Wrong return type on List. Expected 200 got %d", w.Status)
 	}
 	if r.Last().Type != "List" {
-		t.Fatalf("Wrong Renderer called. Expected List got %s", r.Last().Type)
+		t.Errorf("Wrong Renderer called. Expected List got %s", r.Last().Type)
 	}
 
 	w = Get(t, h, "/3/admin_test.T/4f07c34779bf562daff8640c")
 	if w.Status != http.StatusOK {
-		t.Fatalf("Wrong return type on Update. Expected 200 got %d", w.Status)
+		t.Errorf("Wrong return type on Update. Expected 200 got %d", w.Status)
 	}
 	if r.Last().Type != "Update" {
-		t.Fatalf("Wrong Renderer called. Expected Update got %s", r.Last().Type)
+		t.Errorf("Wrong Renderer called. Expected Update got %s", r.Last().Type)
 	}
 
 	w = Get(t, h, "/4/admin_test.T/")
 	if w.Status != http.StatusOK {
-		t.Fatalf("Wrong return type on Create. Expected 200 got %d", w.Status)
+		t.Errorf("Wrong return type on Create. Expected 200 got %d", w.Status)
 	}
 	if r.Last().Type != "Create" {
-		t.Fatalf("Wrong Renderer called. Expected Create got %s", r.Last().Type)
+		t.Errorf("Wrong Renderer called. Expected Create got %s", r.Last().Type)
 	}
 
 	w = Get(t, h, "/5/admin_test.T/4f07c34779bf562daff8640c")
 	if w.Status != http.StatusOK {
-		t.Fatalf("Wrong return type on Detail. Expected 200 got %d", w.Status)
+		t.Errorf("Wrong return type on Detail. Expected 200 got %d", w.Status)
 	}
 	if r.Last().Type != "Detail" {
-		t.Fatalf("Wrong Renderer called. Expected Detail got %s", r.Last().Type)
+		t.Errorf("Wrong Renderer called. Expected Detail got %s", r.Last().Type)
 	}
 
 	w = Get(t, h, "/6/admin_test.T/4f07c34779bf562daff8640c")
 	if w.Status != http.StatusOK {
-		t.Fatalf("Wrong return type on Delete. Expected 200 got %d", w.Status)
+		t.Errorf("Wrong return type on Delete. Expected 200 got %d", w.Status)
 	}
 	if r.Last().Type != "Delete" {
-		t.Fatalf("Wrong Renderer called. Expected Delete got %s", r.Last().Type)
+		t.Errorf("Wrong Renderer called. Expected Delete got %s", r.Last().Type)
 	}
+
+	w = Get(t, h, "/7/login")
+	if w.Status != http.StatusOK {
+		t.Errorf("Wrong return type on Auth. Expected 200 got %d", w.Status)
+	}
+	if r.Last().Type != "Authorize" {
+		t.Errorf("Wrong Renderer called. Expected Authorize got %s", r.Last().Type)
+	}
+
 }
 
 func TestAdminMissingRoutes(t *testing.T) {

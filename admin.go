@@ -10,10 +10,12 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 )
 
 //useful type because these get made so often
+
 type d map[string]interface{}
 
 //adminHandler is a type representing a handler function on an *Admin.
@@ -30,7 +32,7 @@ type Admin struct {
 	Logger   io.Writer         //If nil, os.Stdout is used for logging information.
 
 	//created on demand
-	initd       bool
+	initd       sync.Once
 	server      *http.ServeMux
 	types       map[string]collectionInfo
 	index_cache map[string][]string
@@ -62,42 +64,42 @@ var routes = map[string]adminHandler{
 	"auth":   (*Admin).auth,
 }
 
-//Init must be called before ServeHTTP is called or ServeHTTP will panic.
-func (a *Admin) Init() {
-	//ensure a valid database
-	if a.Session == nil {
-		panic("Mongo session not configured")
-	}
-
-	//make defaults
-	if a.Routes == nil {
-		a.Routes = DefaultRoutes
-	}
-	if a.Key == nil {
-		a.generateKey(128) //128 byte key
-	}
-	if a.Logger == nil {
-		a.Logger = os.Stdout
-	}
-	a.logger = log.New(a.Logger, "ADMIN", log.LstdFlags)
-
-	if a.Renderer == nil {
-		a.Renderer = newDefaultRenderer(a.logger)
-	}
-
-	required := []string{"index", "list", "update", "create", "detail", "delete", "auth"}
-	for _, r := range required {
-		if _, ex := a.Routes[r]; !ex {
-			panic("Route missing: " + r)
+//init sets up the admin's caches and routes.
+func (a *Admin) init() {
+	a.initd.Do(func() {
+		//ensure a valid database
+		if a.Session == nil {
+			panic("Mongo session not configured")
 		}
-	}
 
-	a.generateMux()
-	a.generateIndexCache()
+		//make defaults
+		if a.Routes == nil {
+			a.Routes = DefaultRoutes
+		}
+		if a.Key == nil {
+			a.generateKey(128) //128 byte key
+		}
+		if a.Logger == nil {
+			a.Logger = os.Stdout
+		}
+		a.logger = log.New(a.Logger, "ADMIN", log.LstdFlags)
 
-	a.auth_cache = make(map[*http.Request]AuthSession)
+		if a.Renderer == nil {
+			a.Renderer = newDefaultRenderer(a.logger)
+		}
 
-	a.initd = true
+		required := []string{"index", "list", "update", "create", "detail", "delete", "auth"}
+		for _, r := range required {
+			if _, ex := a.Routes[r]; !ex {
+				panic("Route missing: " + r)
+			}
+		}
+
+		a.generateMux()
+		a.generateIndexCache()
+
+		a.auth_cache = make(map[*http.Request]AuthSession)
+	})
 }
 
 //generateMux creates the internal http.ServeMux to dispatch reqeusts to the
@@ -141,16 +143,14 @@ func (a *Admin) generateKey(size int) {
 }
 
 //collFor returns the mgo.Collection for the specified database.collection.
-func (a *Admin) collFor(dbcoll string) mgo.Collection {
+func (a *Admin) collFor(dbcoll string) *mgo.Collection {
 	pieces := strings.Split(dbcoll, ".")
 	return a.Session.DB(pieces[0]).C(pieces[1])
 }
 
 //ServeHTTP lets *Admin conform to the http.Handler interface for use in web servers.
 func (a *Admin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if !a.initd {
-		panic("Admin served without calling Init first.")
-	}
+	a.init()
 
 	//strip off the prefix
 	req.URL.Path = req.URL.Path[len(a.Prefix):]

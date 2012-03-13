@@ -2,7 +2,7 @@ package admin
 
 import (
 	"fmt"
-	"launchpad.net/gobson/bson"
+	"launchpad.net/mgo/bson"
 	"net/http"
 	"net/url"
 	"testing"
@@ -15,7 +15,6 @@ func TestAdminPostCreate(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T6{}, "admin_test.T6", nil)
-	h.Init()
 	var w *TestResponseWriter
 
 	w = Post(t, h, "/create/admin_test.T6/", url.Values{
@@ -93,7 +92,6 @@ func TestAdminPostUpdate(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T6{}, "admin_test.T6", nil)
-	h.Init()
 	var w *TestResponseWriter
 
 	//revert to original after
@@ -146,7 +144,6 @@ func TestAdminEveryAction(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T6{}, "admin_test.T6", nil)
-	h.Init()
 
 	//cowboy type assertions
 	defer func() {

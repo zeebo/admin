@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"launchpad.net/gobson/bson"
+	"launchpad.net/mgo/bson"
 	"testing"
 )
 
@@ -9,7 +9,6 @@ func TestReverseIdFor(t *testing.T) {
 	h := &Admin{Session: session}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
-	h.Init()
 
 	var x T = T{bson.ObjectIdHex("ffffffffffffffffffffffff")}
 
@@ -26,7 +25,6 @@ func TestReverseCollFor(t *testing.T) {
 	h := &Admin{Session: session}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
-	h.Init()
 
 	if c := r.collFor(T{}); c != "admin_test.T" {
 		t.Fatalf("Expected %q. Got %q.", "admin_test.T", c)
@@ -35,7 +33,8 @@ func TestReverseCollFor(t *testing.T) {
 
 func TestReversePrefix(t *testing.T) {
 	h := &Admin{
-		Prefix: "/admin",
+		Prefix:  "/admin",
+		Session: session,
 	}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
@@ -49,7 +48,6 @@ func TestReverseDefaultObj(t *testing.T) {
 	h := &Admin{Session: session}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
-	h.Init()
 
 	var x T = T{bson.ObjectIdHex("ffffffffffffffffffffffff")}
 
@@ -85,7 +83,6 @@ func TestReverseCustomObj(t *testing.T) {
 	}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
-	h.Init()
 
 	var x T = T{bson.ObjectIdHex("ffffffffffffffffffffffff")}
 
@@ -112,7 +109,6 @@ func TestReverseDefaultSpecified(t *testing.T) {
 	coll, id := "admin_test.T", "ffffffffffffffffffffffff"
 
 	h.Register(T{}, coll, nil)
-	h.Init()
 
 	if c, e := r.Create(coll), "/create/admin_test.T"; c != e {
 		t.Errorf("Expected %q. Got %q.", e, c)
@@ -147,7 +143,6 @@ func TestReverseCustomSpecified(t *testing.T) {
 	r := Reverser{h}
 	coll, id := "admin_test.T", "ffffffffffffffffffffffff"
 	h.Register(T{}, coll, nil)
-	h.Init()
 
 	if c, e := r.Create(coll), "/1/admin_test.T"; c != e {
 		t.Errorf("Expected %q. Got %q.", e, c)

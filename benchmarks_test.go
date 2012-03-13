@@ -41,7 +41,9 @@ func BenchmarkChannelSend(b *testing.B) {
 }
 
 func BenchmarkReverse(b *testing.B) {
-	h := &Admin{}
+	h := &Admin{
+		Session: session,
+	}
 	r := Reverser{h}
 	h.Register(T{}, "admin_test.T", nil)
 	h.generateMux()
@@ -216,5 +218,16 @@ func BenchmarkCRUDCycle(b *testing.B) {
 			"Z": {"true"},
 		})
 		Get(b, h, fmt.Sprintf("/delete/admin_test.T6/%s?_sure=yes", id))
+	}
+}
+
+func BenchmarkAdminEmptyInit(b *testing.B) {
+	h := &Admin{
+		Session: session,
+	}
+	h.init()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		h.init()
 	}
 }

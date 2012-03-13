@@ -150,7 +150,6 @@ func TestAdminCustomPaths(t *testing.T) {
 		Renderer: r,
 	}
 	h.Register(T{}, "admin_test.T", nil)
-	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/1/")
@@ -224,6 +223,5 @@ func TestAdminMissingRoutes(t *testing.T) {
 		}
 	}()
 
-	h.Init()
 	Get(t, h, "/foo")
 }

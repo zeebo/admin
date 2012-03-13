@@ -3,7 +3,7 @@ package admin
 import (
 	"fmt"
 	"github.com/zeebo/sign"
-	"launchpad.net/gobson/bson"
+	"launchpad.net/mgo/bson"
 	"math"
 	"net/http"
 	"path"

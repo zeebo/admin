@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"launchpad.net/gobson/bson"
+	"launchpad.net/mgo/bson"
 	"net/url"
 )
 

@@ -18,7 +18,6 @@ func ExampleAdmin_ServeHTTP() {
 		Session: session,
 	}
 	a.Register(T{}, "my_database.T", nil)
-	a.Init()
 
 	http.Handle("/admin/", a)
 	if err := http.ListenAndServe(":11223", nil); err != nil {
@@ -27,7 +26,7 @@ func ExampleAdmin_ServeHTTP() {
 }
 
 func ExampleAdmin() {
-	session, err := mgo.Mongo("mongo://my_mongo_server")
+	session, err := mgo.Dial("mongo://my_mongo_server")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,8 +49,6 @@ func ExampleAdmin() {
 	a.Register(T{}, "database.collection", &Options{
 		Columns: []string{"First", "Second", "Fifth"},
 	})
-
-	a.Init()
 
 	http.Handle("/admin/", a)
 	if err := http.ListenAndServe(":11223", nil); err != nil {

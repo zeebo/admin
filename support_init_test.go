@@ -73,7 +73,7 @@ func init() {
 	}
 
 	var err error
-	session, err = mgo.Mongo(*sessionurl)
+	session, err = mgo.Dial(*sessionurl)
 	if err != nil {
 		log.Fatal("Cannot use that session: %s", err)
 	}

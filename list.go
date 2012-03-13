@@ -21,7 +21,7 @@ func grabInt(v url.Values, key string, def int) int {
 
 //listParse takes a collection and some query values and generates an iterator
 //for the objects that should be returned on that page
-func listParse(c mgo.Collection, v url.Values) (*mgo.Iter, int, int) {
+func listParse(c *mgo.Collection, v url.Values) (*mgo.Iter, int, int) {
 	//parse out sorting
 	sort := map[string]int{}
 	for key, _ := range v {

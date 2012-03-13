@@ -12,7 +12,6 @@ func TestAuthRedirects(t *testing.T) {
 		Session: session,
 		Auth:    TestAuth{},
 	}
-	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/")
@@ -34,7 +33,6 @@ func TestAuthLogin(t *testing.T) {
 		},
 		Renderer: r,
 	}
-	h.Init()
 	var w *TestResponseWriter
 
 	w = Post(t, h, "/auth/login", url.Values{})
@@ -97,7 +95,6 @@ func TestAuthRedirectAfterLogin(t *testing.T) {
 		},
 		Renderer: r,
 	}
-	h.Init()
 	var w *TestResponseWriter
 
 	w = NewTestResponseWriter()
@@ -127,7 +124,6 @@ func TestAuthRedirectHasWithPrefix(t *testing.T) {
 		Auth:    TestAuth{},
 		Prefix:  "/some/prefix",
 	}
-	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/some/prefix/foo/bar")
@@ -156,7 +152,6 @@ func TestAuthLogout(t *testing.T) {
 		},
 		Renderer: r,
 	}
-	h.Init()
 	var w *TestResponseWriter
 
 	w = Get(t, h, "/auth/logout")
@@ -177,7 +172,6 @@ func TestAuthFailedLoginErrors(t *testing.T) {
 		},
 		Renderer: r,
 	}
-	h.Init()
 	var w *TestResponseWriter
 
 	w = Post(t, h, "/auth/login", url.Values{})

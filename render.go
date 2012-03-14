@@ -1,9 +1,7 @@
 package admin
 
 import (
-	"bytes"
 	"fmt"
-	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -130,62 +128,39 @@ func (i BaseContext) Key(db, coll string) string {
 
 //TemplateContext is the value passed in as the dot to the template for forms
 //by the default renderer. It has methods for returning the values in the field
-//and any errors in attempting to validate the form. For example if we had the
-//type
-//
-//	type MyForm struct {
-//		X int
-//		Y string
-//	}
-//
-//a simple template that uses the TemplateContext for this struct could look like
-//
-//	func (m *MyForm) GetTemplate() string {
-//		return `<span class="errors">{{.Errors.X}}</span>
-//			<input type="text" value="{{.Values.X}}" name="X">
-//			<span class="errors">{{.Errors.Y}}</span>
-//			<input type="text" value="{{.Values.Y}}" name="Y">
-//			<input type="submit">`
-//	}
-//
-//The form is rendered through the html/template package and will do necessary
-//escaping as such. It is the renderers responsibility to wrap the fields
-//in a form tag.
+//and any errors in attempting to validate the form.
 type TemplateContext struct {
-	Errors map[string]error
-	Values map[string]string
+	Errors map[string]interface{}
+	Values map[string]interface{}
 }
 
 //NewTemplateContext creates a new TemplateContext ready to be used.
 func NewTemplateContext() TemplateContext {
-	return TemplateContext{map[string]error{}, map[string]string{}}
+	return TemplateContext{map[string]interface{}{}, map[string]interface{}{}}
 }
 
 //Form encapsulates a form with a context with the ability to execute and output
 //the correct html.
 type Form struct {
-	template *template.Template
-	context  TemplateContext
-	logger   *log.Logger
+	object  Formable
+	context TemplateContext
+	logger  *log.Logger
 }
 
 //Execute calls the template with the context and executes it to the writer
-func (f Form) Execute(w io.Writer) error {
-	return f.template.Execute(w, f.context)
+func (f Form) Execute(w io.Writer) (err error) {
+	_, err = io.WriteString(w, f.object.GetForm(f.context))
+	return
 }
 
 //ExecuteText is for use in templates. It returns the string containing the
 //output of Execute.
-func (f Form) ExecuteText() template.HTML {
-	var buf bytes.Buffer
-	if err := f.Execute(&buf); err != nil {
-		f.logger.Println(err)
-	}
-	return template.HTML(buf.String())
+func (f Form) ExecuteText() string {
+	return f.object.GetForm(f.context)
 }
 
 //Values returns the values map for the Form. This is useful for the Delete
 //renderer to display readonly values for the form.
-func (f Form) Values() map[string]string {
+func (f Form) Values() map[string]interface{} {
 	return f.context.Values
 }

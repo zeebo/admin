@@ -2,7 +2,6 @@ package admin
 
 import (
 	"fmt"
-	"html/template"
 	"reflect"
 	"strings"
 )
@@ -54,7 +53,6 @@ func findIds(typ reflect.Type, columns []string) []int {
 //represents and any options used in specifying the type
 type collectionInfo struct {
 	Type      reflect.Type
-	Template  *template.Template
 	ColumnIds []int
 }
 
@@ -78,8 +76,6 @@ func (a *Admin) Register(typ Formable, dbcoll string, opt *Options) {
 	if ci, ok := a.types[dbcoll]; ok {
 		panic(fmt.Sprintf("db.collection already registered. Had %q->%s . Got %q->%s", dbcoll, ci.Type, dbcoll, t))
 	}
-	//compile the template
-	templ := template.Must(template.New("form").Parse(typ.GetTemplate()))
 
 	//ensure we can create an empty templatecontext for it (no invalid types)
 	if _, err := CreateEmptyValues(typ); err != nil {
@@ -115,7 +111,7 @@ found:
 		ids = findIds(t, opt.Columns)
 	}
 
-	a.types[dbcoll] = collectionInfo{t, templ, ids}
+	a.types[dbcoll] = collectionInfo{t, ids}
 }
 
 //hasType returns if the database/collection pair has been registered.

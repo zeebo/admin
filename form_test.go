@@ -154,7 +154,7 @@ func TestUnflatten(t *testing.T) {
 
 	for _, c := range table {
 		ret := unflatten(c.data, "")
-		if !compare(ret, c.expected) {
+		if !reflect.DeepEqual(ret, c.expected) {
 			t.Errorf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
 		}
 	}
@@ -469,25 +469,36 @@ func TestCreateValuesValid(t *testing.T) {
 		}
 		Q flat
 	}
-	type F map[string]string
 	table := []struct {
 		data     interface{}
-		expected F
+		expected map[string]interface{}
 	}{
-		{flat{"foo", 2, true}, F{"X": "foo", "Y": "2", "Z": "true"}},
-		{flat{"foob", -2, false}, F{"X": "foob", "Y": "-2", "Z": "false"}},
-		{nested{"foo", struct{ Z int }{8}, flat{"foob", 2, true}}, F{"X": "foo", "Y.Z": "8", "Q.X": "foob", "Q.Y": "2", "Q.Z": "true"}},
-		{nested{"food", struct{ Z int }{-8000}, flat{"doof", 20, false}}, F{"X": "food", "Y.Z": "-8000", "Q.X": "doof", "Q.Y": "20", "Q.Z": "false"}},
+		{
+			flat{"foo", 2, true},
+			map[string]interface{}{"X": "foo", "Y": "2", "Z": "true"},
+		},
+		{
+			flat{"foob", -2, false},
+			map[string]interface{}{"X": "foob", "Y": "-2", "Z": "false"},
+		},
+		{
+			nested{"foo", struct{ Z int }{8}, flat{"foob", 2, true}},
+			map[string]interface{}{"X": "foo", "Y": map[string]interface{}{"Z": "8"}, "Q": map[string]interface{}{"X": "foob", "Y": "2", "Z": "true"}},
+		},
+		{
+			nested{"food", struct{ Z int }{-8000}, flat{"doof", 20, false}},
+			map[string]interface{}{"X": "food", "Y": map[string]interface{}{"Z": "-8000"}, "Q": map[string]interface{}{"X": "doof", "Y": "20", "Z": "false"}},
+		},
 	}
 
 	for _, c := range table {
 		ret, err := CreateValues(c.data)
 		if err != nil {
-			t.Errorf("Error processing: %s\n%s", err, c.data)
+			t.Errorf("Error processing: %s\n%v", err, c.data)
 		}
 
-		if !compareString(ret, c.expected) {
-			t.Errorf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
+		if !reflect.DeepEqual(ret, c.expected) {
+			t.Errorf("Test case failed: %v\nExpected: %v\nGot:      %v\n", c.data, c.expected, ret)
 		}
 	}
 }
@@ -504,37 +515,42 @@ func TestCreateValuesInValid(t *testing.T) {
 }
 
 func TestCreateEmptyValuesValid(t *testing.T) {
-	type F map[string]string
 	table := []struct {
 		data     interface{}
-		expected F
+		expected map[string]interface{}
 	}{
 		{struct {
 			X *int
 			Y **int
 			Z **bool
-		}{}, F{"X": "", "Y": "", "Z": ""}},
+		}{},
+			map[string]interface{}{"X": "", "Y": "", "Z": ""},
+		},
 		{struct {
 			X *int
 			Y int
 			Z *******int
-		}{}, F{"X": "", "Y": "", "Z": ""}},
+		}{},
+			map[string]interface{}{"X": "", "Y": "", "Z": ""},
+		},
 		{struct {
 			X **struct {
 				Y *int
 				Z string
 			}
-		}{}, F{"X.Y": "", "X.Z": ""}},
+		}{},
+			map[string]interface{}{"X": map[string]interface{}{"Y": "", "Z": ""}},
+		},
 	}
 
 	for _, c := range table {
 		ret, err := CreateEmptyValues(c.data)
 		if err != nil {
-			t.Errorf("Error processing: %s\n%s", err, c.data)
+			t.Errorf("Error processing: %s\n%v", err, c.data)
 		}
 
-		if !compareString(ret, c.expected) {
-			t.Errorf("Test case failed: %s\nExpected: %s\nGot: %s\n", c.data, c.expected, ret)
+		if !reflect.DeepEqual(ret, c.expected) {
+			t.Errorf("Test case failed: %v\nExpected: %v\nGot:      %v\n", c.data, c.expected, ret)
 		}
 	}
 }
@@ -596,57 +612,6 @@ func TestCreateEmptyValuesInvalid(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Expected an error because slices are unsupported. Got a %s", r)
 	}
-}
-
-//compare two d types deeply.
-func compare(one, two d) bool {
-	if len(one) != len(two) {
-		return false
-	}
-
-	for k, v1 := range one {
-		v2, ex := two[k]
-		if !ex {
-			return false
-		}
-
-		//check strings
-		if v1s, ok := v1.(string); ok {
-			if v2s, ok := v2.(string); ok {
-				if v1s == v2s {
-					continue
-				}
-			}
-		}
-
-		//check dicts
-		if v1d, ok := v1.(d); ok {
-			if v2d, ok := v2.(d); ok {
-				if compare(v1d, v2d) {
-					continue
-				}
-			}
-		}
-
-		return false
-	}
-	return true
-}
-
-func compareString(one, two map[string]string) bool {
-	if len(one) != len(two) {
-		return false
-	}
-	for k, v1 := range one {
-		v2, ex := two[k]
-		if !ex {
-			return false
-		}
-		if v1 != v2 {
-			return false
-		}
-	}
-	return true
 }
 
 func compareErrs(one LoadingErrors, two []string) bool {

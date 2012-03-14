@@ -63,20 +63,6 @@ func TestAdminRegisterDuplicate(t *testing.T) {
 	h.Register(T{}, "admin_test.T", nil)
 }
 
-func TestAdminRegisterBadTemplate(t *testing.T) {
-	h := &Admin{
-		Renderer: &TestRenderer{},
-	}
-
-	defer func() {
-		if err := recover(); err == nil {
-			t.Fatal("No panic when attempting to register bad template")
-		}
-	}()
-
-	h.Register(T3{}, "admin_test.T3", nil)
-}
-
 func TestAdminRegisterInvalidType(t *testing.T) {
 	h := &Admin{
 		Renderer: &TestRenderer{},

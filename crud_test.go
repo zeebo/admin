@@ -40,7 +40,7 @@ func TestAdminPostCreate(t *testing.T) {
 
 	values := params.Form.context.Values
 
-	defer session.DB("admin_test").C("T6").Remove(d{"_id": bson.ObjectIdHex(values["ID"])})
+	defer session.DB("admin_test").C("T6").Remove(d{"_id": bson.ObjectIdHex(values["ID"].(string))})
 
 	if values["X"] != "20" {
 		t.Fatalf("X: Expected %q. Got %q.", "20", values["X"])
@@ -159,7 +159,7 @@ func TestAdminEveryAction(t *testing.T) {
 		"Y": {"new"},
 		"Z": {"false"},
 	})
-	id := r.Last().Params.(CreateContext).Form.context.Values["ID"]
+	id := r.Last().Params.(CreateContext).Form.context.Values["ID"].(string)
 
 	//lets check it exists in the database
 	if n, err := c.Find(d{"_id": bson.ObjectIdHex(id)}).Count(); n != 1 || err != nil {

@@ -1,19 +1,20 @@
 package admin
 
 import (
-	"errors"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
 //newDefaultRenderer returns a *defaultRenderer ready to be used.
+
 func newDefaultRenderer(l *log.Logger) *defaultRenderer {
 	return &defaultRenderer{
-		initd:    make(chan bool, 1),
 		mtimes:   make(map[string]time.Time),
 		newtemp:  make(chan *template.Template),
 		currtemp: make(chan *template.Template),
@@ -24,7 +25,7 @@ func newDefaultRenderer(l *log.Logger) *defaultRenderer {
 //defaultRenderer conforms to the Renderer interface and uses some magic templates
 //to create a pretty default interface.
 type defaultRenderer struct {
-	initd    chan bool
+	initd    sync.Once
 	mtimes   map[string]time.Time
 	newtemp  chan *template.Template
 	currtemp chan *template.Template
@@ -34,22 +35,17 @@ type defaultRenderer struct {
 //init is called once on a defaultRenderer. Sets up the system for watching
 //the directory of templates.
 func (d *defaultRenderer) init() {
-	//only init once
-	select {
-	case d.initd <- true:
-	default:
-		return
-	}
+	d.initd.Do(func() {
+		//seed the parsing
+		tmpl, err := d.parse()
+		if err != nil {
+			panic(err)
+		}
 
-	//seed the parsing
-	tmpl, err := d.parse()
-	if err != nil {
-		panic(err)
-	}
-
-	//setup watchers
-	go d.watch()
-	go d.sender(tmpl)
+		//setup watchers
+		go d.watch()
+		go d.sender(tmpl)
+	})
 }
 
 //sender is a simple function to always send out the most current template (with
@@ -70,7 +66,7 @@ func (d *defaultRenderer) Lookup(name string) *template.Template {
 
 	t := (<-d.currtemp).Lookup(name)
 	if t == nil {
-		panic(errors.New("Can't find requested template: " + name))
+		panic(fmt.Errorf("Can't find requested template: %s", name))
 	}
 
 	return t
@@ -82,7 +78,7 @@ func (d *defaultRenderer) dir() string {
 	if dir := os.Getenv("ADMIN_TEMPLATE_DIR"); dir != "" {
 		return dir
 	}
-	return "./templates"
+	return "templates"
 }
 
 //updateMtimes globs the template directory for files and checks their modified
@@ -132,16 +128,24 @@ func (d *defaultRenderer) watch() {
 }
 
 //parse checks the modified times and parses the template directory if required.
-func (d *defaultRenderer) parse() (*template.Template, error) {
+func (d *defaultRenderer) parse() (tmpl *template.Template, err error) {
 	changed, err := d.updateMtimes()
 	if err != nil {
-		return nil, err
+		return
 	}
 	if !changed {
-		return nil, nil
+		return
 	}
 
-	return template.ParseGlob(filepath.Join(d.dir(), "*"))
+	tmpl = template.New("base")
+	tmpl.Funcs(template.FuncMap{
+		"noescape": func(a ...interface{}) string {
+			return fmt.Sprint(a...)
+		},
+	})
+
+	tmpl, err = tmpl.ParseGlob(filepath.Join(d.dir(), "*"))
+	return
 }
 
 //NotFound presents a basic 404 with no special body.

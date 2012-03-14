@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -11,10 +10,8 @@ import (
 
 //Formable is the type of objects that the admin can represent.
 type Formable interface {
-	//GetTemplate returns the template text that will be used to render the
-	//form on the page. For more details on what gets sent into the form
-	//and what methods are present for rendering, see TemplateContext
-	GetTemplate() string
+	//GetForm returns the rendered html of the form given the appropriate context.
+	GetForm(TemplateContext) string
 
 	//Validate is called on the type after all the individual fields are loaded.
 	//There must be no errors loading for Validate to be called.
@@ -41,13 +38,13 @@ type Formable interface {
 //loading such as an incorrect schema sent to your struct.
 //
 //GenerateContext returns the TemplateContext that will be passed in to the
-//template returned by GetTemplate(). Structs cannot be handled by the admin
+//call to GetForm(). Structs cannot be handled by the admin
 //when they contain types such as slices or maps in your data structure. For
 //more discussion on what types are allowed, see the Load method.
 type Loader interface {
 	Formable
 	Load(url.Values) (LoadingErrors, error)
-	GenerateValues() map[string]string
+	GenerateValues() map[string]interface{}
 }
 
 //LoadingErrors is the type that the Load method returns for errors loading into
@@ -64,12 +61,12 @@ type Loader interface {
 //	}
 //
 //has the keys "A", "B.C", and "B.D".
-type LoadingErrors map[string]error
+type LoadingErrors map[string]interface{}
 
 //ValidationErrors is the type that Validate must return to indicate errors in
 //validation. For example putting an invalid email or phone number into a field
 //expecting one. For what the keys of the map must be, see LoadingErrors
-type ValidationErrors map[string]error
+type ValidationErrors map[string]interface{}
 
 //indirect walks up interface/pointer chains until it gets to an actual concrete
 //type. If the pointer is nil, we can't walk up so we get an error.
@@ -89,7 +86,7 @@ func indirect(val reflect.Value) (v reflect.Value, e error) {
 	}
 
 	if !val.IsValid() {
-		return val, errors.New("Invalid value after indirection")
+		return val, fmt.Errorf("Invalid value after indirection")
 	}
 
 	return val, nil
@@ -109,15 +106,14 @@ type hexable interface {
 }
 
 //CreateValues is used to create a map for insertion into a TemplateContext.
-//It calls fmt.Sprintf on the values which hopefully wont mangle anything.
-func CreateValues(obj interface{}) (map[string]string, error) {
+func CreateValues(obj interface{}) (map[string]interface{}, error) {
 	val, err := indirect(reflect.ValueOf(obj))
 	if err != nil {
 		return nil, err
 	}
 	typ := val.Type()
 
-	res := map[string]string{}
+	res := map[string]interface{}{}
 	for i := 0; i < val.NumField(); i++ {
 		field, err := indirect(val.Field(i))
 		if err != nil {
@@ -126,7 +122,7 @@ func CreateValues(obj interface{}) (map[string]string, error) {
 		name := typ.Field(i).Name
 
 		if !field.CanInterface() {
-			return nil, errors.New(fmt.Sprintf("Can't get the value in %s", name))
+			return nil, fmt.Errorf("Can't get the value in %s", name)
 		}
 
 		//handle the basic types
@@ -147,9 +143,7 @@ func CreateValues(obj interface{}) (map[string]string, error) {
 		}
 
 		//copy data into local map
-		for k, v := range data {
-			res[fmt.Sprintf("%s.%s", name, k)] = v
-		}
+		res[name] = data
 	}
 
 	return res, nil
@@ -158,14 +152,14 @@ func CreateValues(obj interface{}) (map[string]string, error) {
 //CreateEmptyValues creates a map for insertion into a TemplateContext using
 //the empty string for every value. This is useful for generating a template
 //context on a type that has not been loaded into, e.g. the create page.
-func CreateEmptyValues(obj interface{}) (map[string]string, error) {
+func CreateEmptyValues(obj interface{}) (map[string]interface{}, error) {
 	typ := indirectType(reflect.TypeOf(obj))
 	return createEmptyValuesType(typ)
 }
 
 //createEmptyValuesType is a helper for createEmptyValues. It helps the client
 //not depend on the reflect package.
-func createEmptyValuesType(typ reflect.Type) (m map[string]string, e error) {
+func createEmptyValuesType(typ reflect.Type) (m map[string]interface{}, e error) {
 	//capture errors because we're going cowboy with reflect
 	defer func() {
 		if i := recover(); i != nil {
@@ -176,12 +170,12 @@ func createEmptyValuesType(typ reflect.Type) (m map[string]string, e error) {
 		}
 	}()
 
-	res := map[string]string{}
+	res := map[string]interface{}{}
 	for i := 0; i < typ.NumField(); i++ {
 		field, name := indirectType(typ.Field(i).Type), typ.Field(i).Name
 
 		if !validType(field) {
-			return nil, errors.New(fmt.Sprintf("Unsupported type: %s", field.Kind()))
+			return nil, fmt.Errorf("Unsupported type: %s", field.Kind())
 		}
 
 		if field.Kind() != reflect.Struct {
@@ -195,9 +189,7 @@ func createEmptyValuesType(typ reflect.Type) (m map[string]string, e error) {
 		}
 
 		//copy the data in
-		for k, v := range data {
-			res[fmt.Sprintf("%s.%s", name, k)] = v
-		}
+		res[name] = data
 	}
 
 	return res, nil
@@ -218,12 +210,6 @@ func validType(typ reflect.Type) bool {
 //alloc walks up a type through indirections and interfaces allocating as needed
 //until it gets to a concrete base type.
 func alloc(v reflect.Value) reflect.Value {
-	//TODO: not sure if this is needed. figure that out.
-	/*
-		if v.Kind() != reflect.Ptr && v.Type().Name() != "" && v.CanAddr() {
-			v = v.Addr()
-		}
-	*/
 	for {
 		if v.Kind() == reflect.Interface && !v.IsNil() {
 			v = v.Elem()
@@ -247,7 +233,7 @@ func loadInto(val reflect.Value, data string) (e error) {
 	val = alloc(val)
 
 	if !val.IsValid() || !val.CanSet() {
-		return errors.New("Value cannot be assigned to.")
+		return fmt.Errorf("Value cannot be assigned to.")
 	}
 
 	//catch any panics from reflect and just return it as an error
@@ -288,7 +274,7 @@ func loadInto(val reflect.Value, data string) (e error) {
 	case reflect.String:
 		val.SetString(data)
 	default:
-		return errors.New(fmt.Sprintf("Can't insert into a %s", val.Kind()))
+		return fmt.Errorf("Can't insert into a %s", val.Kind())
 	}
 
 	return nil
@@ -363,7 +349,7 @@ func Load(form url.Values, obj interface{}) (LoadingErrors, error) {
 
 	val := reflect.ValueOf(obj).Elem()
 	if !val.CanSet() || !val.IsValid() {
-		return nil, errors.New(fmt.Sprintf("Can't set to the object sent in: CanSet(%v) IsValid(%v)", val.CanSet(), val.IsValid()))
+		return nil, fmt.Errorf("Can't set to the object sent in: CanSet(%v) IsValid(%v)", val.CanSet(), val.IsValid())
 	}
 
 	return apply(val, unflatten(form, ""), "")
@@ -376,7 +362,7 @@ func Load(form url.Values, obj interface{}) (LoadingErrors, error) {
 func apply(obj reflect.Value, data d, prefix string) (LoadingErrors, error) {
 	//make sure we have a good value
 	if obj.Kind() != reflect.Struct || !obj.CanSet() || !obj.IsValid() {
-		return nil, errors.New(fmt.Sprintf("Attempted to apply on something that wasn't a struct or was invalid - CanSet(%v) IsValid(%v) Kind(%s)", obj.CanSet(), obj.IsValid(), obj.Kind()))
+		return nil, fmt.Errorf("Attempted to apply on something that wasn't a struct or was invalid - CanSet(%v) IsValid(%v) Kind(%s)", obj.CanSet(), obj.IsValid(), obj.Kind())
 	}
 
 	//set up our holders
@@ -390,14 +376,14 @@ func apply(obj reflect.Value, data d, prefix string) (LoadingErrors, error) {
 
 		//make sure the field is ok
 		if t := indirectType(typ.Field(i).Type); !validType(t) {
-			return nil, errors.New(fmt.Sprintf("Attempted to load into a %v, an invalid type.", t))
+			return nil, fmt.Errorf("Attempted to load into a %v, an invalid type.", t)
 		}
 
 		//handle basic field types
 		if field.Kind() != reflect.Struct {
 			sval, ok := data[name].(string)
 			if !ok {
-				return nil, errors.New("Attmped to load a dictionary into a basic type: " + prefix + name)
+				return nil, fmt.Errorf("Attmped to load a dictionary into a basic type: %s%s", prefix, name)
 			}
 
 			//load the thing into the field and grab the errors
@@ -411,7 +397,7 @@ func apply(obj reflect.Value, data d, prefix string) (LoadingErrors, error) {
 		//handle the struct case
 		dval, ok := data[name].(d)
 		if !ok {
-			return nil, errors.New("Attempted to load a string into a struct type: " + prefix + name)
+			return nil, fmt.Errorf("Attempted to load a string into a struct type: %s%s", prefix, name)
 		}
 
 		//recurse

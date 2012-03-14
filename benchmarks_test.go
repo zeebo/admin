@@ -209,7 +209,7 @@ func BenchmarkCRUDCycle(b *testing.B) {
 			"Y": {"new"},
 			"Z": {"false"},
 		})
-		id = r.Last().Params.(CreateContext).Form.context.Values["ID"]
+		id = r.Last().Params.(CreateContext).Form.context.Values["ID"].(string)
 
 		Get(b, h, fmt.Sprintf("/detail/admin_test.T6/%s", id))
 		Post(b, h, fmt.Sprintf("/update/admin_test.T6/%s", id), url.Values{

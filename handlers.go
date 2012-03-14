@@ -143,9 +143,9 @@ func (a *Admin) detail(w http.ResponseWriter, req *http.Request) {
 		Collection:  coll,
 		Object:      t,
 		Form: Form{
-			template: a.types[coll].Template,
-			context:  ctx,
-			logger:   a.logger,
+			object:  t,
+			context: ctx,
+			logger:  a.logger,
 		},
 	})
 }
@@ -206,9 +206,9 @@ func (a *Admin) delete(w http.ResponseWriter, req *http.Request) {
 		Success:     success,
 		Error:       err,
 		Form: Form{
-			template: a.types[coll].Template,
-			context:  ctx,
-			logger:   a.logger,
+			object:  t,
+			context: ctx,
+			logger:  a.logger,
 		},
 	})
 }
@@ -353,7 +353,7 @@ func (a *Admin) update(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var attempted, success bool
-	var errors map[string]error
+	var errors map[string]interface{}
 	if req.Method == "POST" {
 		attempted = true
 
@@ -376,8 +376,8 @@ func (a *Admin) update(w http.ResponseWriter, req *http.Request) {
 
 render:
 	var form = Form{
-		template: a.types[coll].Template,
-		logger:   a.logger,
+		object: t,
+		logger: a.logger,
 	}
 	if ctx, err := generateContext(t, errors); err != nil {
 		a.Renderer.InternalError(w, req, err)
@@ -414,7 +414,7 @@ func (a *Admin) create(w http.ResponseWriter, req *http.Request) {
 	c, t := a.collFor(coll), a.newType(coll)
 
 	var attempted, success bool
-	var errors map[string]error
+	var errors map[string]interface{}
 	if req.Method == "POST" {
 		attempted = true
 
@@ -445,8 +445,8 @@ func (a *Admin) create(w http.ResponseWriter, req *http.Request) {
 
 render:
 	var form = Form{
-		template: a.types[coll].Template,
-		logger:   a.logger,
+		object: t,
+		logger: a.logger,
 	}
 	if attempted {
 		if ctx, err := generateContext(t, errors); err != nil {
@@ -478,7 +478,7 @@ render:
 
 //performLoading is a helper function that loads and validates the form, returning
 //any errors from the two steps. It respects if the type is a Loader.
-func performLoading(req *http.Request, t Formable) (errors map[string]error, err error) {
+func performLoading(req *http.Request, t Formable) (errors map[string]interface{}, err error) {
 	//TODO: files!
 	err = req.ParseForm()
 	if err != nil {
@@ -503,7 +503,7 @@ func performLoading(req *http.Request, t Formable) (errors map[string]error, err
 //generateContext takes a value that should be filled in, and some errors generated
 //while filling it in and returns a TemplateContext for rendering a Form, and
 //any errors attempting to do so.
-func generateContext(t Formable, errors map[string]error) (TemplateContext, error) {
+func generateContext(t Formable, errors map[string]interface{}) (TemplateContext, error) {
 	if l, ok := t.(Loader); ok {
 		return TemplateContext{
 			Values: l.GenerateValues(),
